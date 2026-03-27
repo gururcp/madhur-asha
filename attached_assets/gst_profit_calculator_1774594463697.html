@@ -1,0 +1,70 @@
+
+<style>
+.card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 1rem 1.25rem; margin-bottom: 12px; }
+.section-label { font-size: 11px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-text-tertiary); margin-bottom: 10px; }
+.row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 0.5px solid var(--color-border-tertiary); font-size: 14px; color: var(--color-text-primary); }
+.row:last-child { border-bottom: none; }
+.row.total { font-weight: 500; padding-top: 10px; font-size: 15px; }
+.row.highlight { color: var(--color-text-success); font-weight: 500; }
+.row.deduct { color: var(--color-text-danger); }
+.row.credit { color: var(--color-text-info); }
+.val { font-variant-numeric: tabular-nums; }
+.metric-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-bottom: 12px; }
+.metric { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 12px; text-align: center; }
+.metric .lbl { font-size: 12px; color: var(--color-text-secondary); margin-bottom: 4px; }
+.metric .num { font-size: 20px; font-weight: 500; }
+.metric .num.green { color: var(--color-text-success); }
+.metric .num.red { color: var(--color-text-danger); }
+.metric .num.blue { color: var(--color-text-info); }
+.divider { border: none; border-top: 0.5px solid var(--color-border-tertiary); margin: 10px 0; }
+.tag { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 99px; margin-left: 6px; }
+.tag.itc { background: var(--color-background-info); color: var(--color-text-info); }
+</style>
+
+<div class="metric-grid">
+  <div class="metric">
+    <div class="lbl">You pay (purchase)</div>
+    <div class="num red">₹2,00,000</div>
+  </div>
+  <div class="metric">
+    <div class="lbl">You receive (sale)</div>
+    <div class="num green">₹3,30,000</div>
+  </div>
+  <div class="metric">
+    <div class="lbl">Net profit</div>
+    <div class="num blue">₹85,169</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="section-label">Step 1 — Purchase (₹2,00,000 incl. 18% GST)</div>
+  <div class="row"><span>Purchase price (ex-GST)</span><span class="val">₹1,69,492</span></div>
+  <div class="row credit"><span>GST paid → becomes your ITC <span class="tag itc">Input Tax Credit</span></span><span class="val">₹30,508</span></div>
+</div>
+
+<div class="card">
+  <div class="section-label">Step 2 — Sale (₹3,30,000 incl. 18% GST)</div>
+  <div class="row"><span>Sale price (ex-GST)</span><span class="val">₹2,79,661</span></div>
+  <div class="row deduct"><span>GST collected from buyer</span><span class="val">₹50,339</span></div>
+</div>
+
+<div class="card">
+  <div class="section-label">Step 3 — GST settlement with government</div>
+  <div class="row"><span>GST collected (output tax)</span><span class="val">₹50,339</span></div>
+  <div class="row credit"><span>Minus: GST already paid (ITC)</span><span class="val">− ₹30,508</span></div>
+  <div class="row total deduct"><span>Net GST payable to govt</span><span class="val">₹19,831</span></div>
+</div>
+
+<div class="card">
+  <div class="section-label">Step 4 — Final profit calculation</div>
+  <div class="row"><span>Revenue (ex-GST)</span><span class="val">₹2,79,661</span></div>
+  <div class="row deduct"><span>Cost of computers (ex-GST)</span><span class="val">− ₹1,69,492</span></div>
+  <div class="row"><span style="font-weight:500">Gross profit</span><span class="val" style="font-weight:500">₹1,10,169</span></div>
+  <hr class="divider">
+  <div class="row deduct"><span>Tech installation expense</span><span class="val">− ₹25,000</span></div>
+  <div class="row total highlight"><span>NET PROFIT (after all GST & ITC)</span><span class="val">₹85,169</span></div>
+</div>
+
+<div style="font-size:12px;color:var(--color-text-tertiary);padding:4px 2px;">
+  * GST is fully neutral — ITC exactly cancels the GST you paid on purchase. Your real cost/revenue is always the ex-GST figure.
+</div>

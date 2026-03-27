@@ -1,0 +1,22 @@
+packages:
+  "framer-motion": "For page transitions and smooth UI animations"
+  "clsx": "Utility for constructing className strings conditionally"
+  "tailwind-merge": "Utility function to efficiently merge Tailwind CSS classes"
+  "date-fns": "For formatting timestamps"
+  "recharts": "For rendering beautiful dashboard charts"
+  "react-hook-form": "For complex form state management"
+  "@hookform/resolvers": "For validating forms with Zod"
+  "zod": "For strict schema validation on the frontend"
+
+images:
+  - path: "artifacts/madhur-asha/public/images/hero-bg.png"
+    description: "A beautiful, premium, natural green abstract gradient background with soft subtle mountain geometric motifs, Indian corporate aesthetic, high quality"
+    aspect_ratio: "16:9"
+  - path: "artifacts/madhur-asha/public/images/logo.png"
+    description: "Minimalist geometric mountain and triangle motif logo in vibrant green (#2DB87A) and dark slate, on a transparent background, professional Indian enterprise style"
+    aspect_ratio: "1:1"
+
+notes:
+  - "The app relies on the existing generated @workspace/api-client-react hooks."
+  - "Authentication is session-based via Google OAuth at /api/auth/google"
+  - "GST calculation relies strictly on ex-GST numbers for accurate profit margins."

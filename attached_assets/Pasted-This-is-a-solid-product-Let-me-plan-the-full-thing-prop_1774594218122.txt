@@ -1,0 +1,100 @@
+This is a solid product. Let me plan the full thing properly before we write a line of code.
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation-duration: 0.25s;
+    animation-timing-function: cubic-bezier(0.19, 1, 0.22, 1);
+  }
+VvisualizeVvisualize show_widget
+Full feature plan
+Branding & UI
+
+Color scheme: #2DB87A green (primary), white, dark text — matches your invoice theme
+Mountain logo mark + "MADHUR ASHA ENTERPRISES" in the top nav
+Every PDF export carries the same header as your invoices
+
+
+Access tiers (3 levels)
+RoleWhoWhat they can doAdminmanishkeche26@gmail.com, guru2rcp@gmail.comEverything — all customers, all bills, approve/reject users, manage accessCustomer accessApproved userCalculator + save bills + view history — but only for customers assigned to them by adminCalc onlyApproved userJust the calculator — no save, no history, no customer data visible
+
+Google OAuth flow
+
+User hits "Sign in with Google"
+First login → account created with status pending
+Both admins get an email: "New access request from [name] — Approve / Reject"
+Admin logs in → sees pending requests panel → approves and assigns role (calc-only or customer-access with specific customers selected)
+User gets notified by email when approved
+
+
+Customer manager module (admin + customer-access users)
+
+Add customer: Name, GSTIN, address, contact
+Each customer has their own "ledger" — all calculations/bills saved under them
+Search customers, view full bill history per customer
+Admin can see all customers; customer-access users only see their assigned ones
+
+
+Calculator module
+Same logic as we built — purchase (GST incl/excl), sale (GST incl/excl), expenses (multiple rows, each with GST toggle), commissions (cash, no GST), live net profit output.
+Additional fields when saving:
+
+Select customer (dropdown)
+Bill / reference number
+Date
+Notes
+
+
+MongoDB collections
+users          → googleId, email, name, role, status, assignedCustomers[]
+customers      → name, gstin, address, contact, createdBy
+calculations   → customerId, userId, label, date, inputs{}, result{}, pdfUrl
+accessRequests → userId, requestedAt, status, reviewedBy, reviewedAt
+
+Pages / routes
+/                  → Landing + login (Madhur Asha branded)
+/dashboard         → Summary cards (recent calcs, customer count, net profit MTD)
+/calculator        → The calc form
+/customers         → Customer list + add new
+/customers/:id     → Individual customer — all their bills
+/history           → All saved calculations (filterable by customer, date, amount)
+/admin/users       → Pending + approved users, access management
+/admin/requests    → Approve / reject queue
+/profile           → Own account settings
+
+Tech choices finalised
+PieceToolReasonAuthPassport.js + Google OAuth2Standard, well-documented, freeEmail alertsNodemailer + Gmail SMTPFree, no extra service neededPDF exportjsPDF + jspdf-autotableClient-side, no server loadState mgmtZustandLighter than Redux, perfect for this scaleFormsReact Hook FormClean, validation built inStylingTailwind CSSFast to build, easy to theme with Madhur Asha green
+
+Build sequence
+Phase 1 — Foundation
+  ├── Vite + React + Tailwind setup (green theme tokens)
+  ├── Express + MongoDB Atlas connection
+  ├── Google OAuth (Passport.js) — login / logout
+  └── User model + access tier middleware
+
+Phase 2 — Admin + access flow
+  ├── Pending requests page
+  ├── Approve/reject + role assignment
+  ├── Nodemailer alerts to both admins
+  └── User notified on approval
+
+Phase 3 — Calculator
+  ├── Full calc form with GST logic
+  ├── Live results panel
+  └── PDF export (Madhur Asha branded)
+
+Phase 4 — Customer module
+  ├── Add/edit/search customers
+  ├── Link calc saves to a customer
+  └── Customer ledger page
+
+Phase 5 — History & dashboard
+  ├── All bills with filters
+  ├── Customer drill-down
+  └── Dashboard summary cards
+
+Phase 6 — Deploy
+  ├── Vercel (frontend)
+  ├── Render (backend)
+  └── MongoDB Atlas + Google OAuth credentials wired via env vars
+
+Ready to start building? I'll begin with Phase 1 — the full project scaffold with the Madhur Asha green theme, Google OAuth wired up, and the three-tier access middleware in place. That gives us a working skeleton everything else plugs into.

@@ -1,22 +1,28 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Madhur Asha Enterprises Portal API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Authentication operations
+  - name: users
+    description: User management
+  - name: customers
+    description: Customer management
+  - name: calculations
+    description: GST calculations
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +30,275 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current user
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Logout
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /users:
+    get:
+      operationId: listUsers
+      tags: [users]
+      summary: List all users (admin only)
+      responses:
+        "200":
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+
+  /users/{id}/approve:
+    post:
+      operationId: approveUser
+      tags: [users]
+      summary: Approve a user (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApproveUserRequest"
+      responses:
+        "200":
+          description: User approved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /users/{id}/reject:
+    post:
+      operationId: rejectUser
+      tags: [users]
+      summary: Reject a user (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: User rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /customers:
+    get:
+      operationId: listCustomers
+      tags: [customers]
+      summary: List customers
+      responses:
+        "200":
+          description: List of customers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Customer"
+    post:
+      operationId: createCustomer
+      tags: [customers]
+      summary: Create a customer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCustomerRequest"
+      responses:
+        "201":
+          description: Customer created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Customer"
+
+  /customers/{id}:
+    get:
+      operationId: getCustomer
+      tags: [customers]
+      summary: Get a customer
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Customer
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Customer"
+    put:
+      operationId: updateCustomer
+      tags: [customers]
+      summary: Update a customer
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCustomerRequest"
+      responses:
+        "200":
+          description: Customer updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Customer"
+    delete:
+      operationId: deleteCustomer
+      tags: [customers]
+      summary: Delete a customer
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Customer deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /calculations:
+    get:
+      operationId: listCalculations
+      tags: [calculations]
+      summary: List calculations
+      parameters:
+        - name: customerId
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of calculations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Calculation"
+    post:
+      operationId: createCalculation
+      tags: [calculations]
+      summary: Save a calculation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCalculationRequest"
+      responses:
+        "201":
+          description: Calculation saved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Calculation"
+
+  /calculations/{id}:
+    get:
+      operationId: getCalculation
+      tags: [calculations]
+      summary: Get a calculation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Calculation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Calculation"
+    delete:
+      operationId: deleteCalculation
+      tags: [calculations]
+      summary: Delete a calculation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Calculation deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /dashboard/stats:
+    get:
+      operationId: getDashboardStats
+      tags: [calculations]
+      summary: Get dashboard stats
+      responses:
+        "200":
+          description: Dashboard stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardStats"
+
 components:
   schemas:
     HealthStatus:
@@ -31,6 +306,228 @@ components:
       properties:
         status:
           type: string
-      required:
-        - status
+      required: [status]
 
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required: [error]
+
+    MessageResponse:
+      type: object
+      properties:
+        message:
+          type: string
+      required: [message]
+
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        googleId:
+          type: string
+        email:
+          type: string
+        name:
+          type: string
+        picture:
+          type: string
+          nullable: true
+        role:
+          type: string
+          enum: [admin, customer_access, calc_only]
+        status:
+          type: string
+          enum: [pending, approved, rejected]
+        assignedCustomerIds:
+          type: array
+          items:
+            type: integer
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, googleId, email, name, role, status, assignedCustomerIds, createdAt]
+
+    ApproveUserRequest:
+      type: object
+      properties:
+        role:
+          type: string
+          enum: [admin, customer_access, calc_only]
+        assignedCustomerIds:
+          type: array
+          items:
+            type: integer
+      required: [role]
+
+    Customer:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        gstin:
+          type: string
+          nullable: true
+        address:
+          type: string
+          nullable: true
+        contact:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        calculationCount:
+          type: integer
+      required: [id, name, createdAt, calculationCount]
+
+    CreateCustomerRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        gstin:
+          type: string
+          nullable: true
+        address:
+          type: string
+          nullable: true
+        contact:
+          type: string
+          nullable: true
+      required: [name]
+
+    Expense:
+      type: object
+      properties:
+        label:
+          type: string
+        amount:
+          type: number
+        hasGst:
+          type: boolean
+        gstRate:
+          type: number
+      required: [label, amount, hasGst, gstRate]
+
+    CalculationInputs:
+      type: object
+      properties:
+        purchaseAmount:
+          type: number
+        purchaseInclGst:
+          type: boolean
+        purchaseGstRate:
+          type: number
+        saleAmount:
+          type: number
+        saleInclGst:
+          type: boolean
+        saleGstRate:
+          type: number
+        expenses:
+          type: array
+          items:
+            $ref: "#/components/schemas/Expense"
+        commission:
+          type: number
+      required: [purchaseAmount, purchaseInclGst, purchaseGstRate, saleAmount, saleInclGst, saleGstRate, expenses, commission]
+
+    CalculationResult:
+      type: object
+      properties:
+        purchaseExGst:
+          type: number
+        purchaseGstAmount:
+          type: number
+        saleExGst:
+          type: number
+        saleGstAmount:
+          type: number
+        netGstPayable:
+          type: number
+        grossProfit:
+          type: number
+        totalExpenses:
+          type: number
+        netProfit:
+          type: number
+      required: [purchaseExGst, purchaseGstAmount, saleExGst, saleGstAmount, netGstPayable, grossProfit, totalExpenses, netProfit]
+
+    Calculation:
+      type: object
+      properties:
+        id:
+          type: integer
+        customerId:
+          type: integer
+          nullable: true
+        customerName:
+          type: string
+          nullable: true
+        userId:
+          type: integer
+        label:
+          type: string
+          nullable: true
+        billNumber:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        date:
+          type: string
+          format: date-time
+        inputs:
+          $ref: "#/components/schemas/CalculationInputs"
+        result:
+          $ref: "#/components/schemas/CalculationResult"
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, userId, date, inputs, result, createdAt]
+
+    CreateCalculationRequest:
+      type: object
+      properties:
+        customerId:
+          type: integer
+          nullable: true
+        label:
+          type: string
+          nullable: true
+        billNumber:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        date:
+          type: string
+          format: date-time
+        inputs:
+          $ref: "#/components/schemas/CalculationInputs"
+        result:
+          $ref: "#/components/schemas/CalculationResult"
+      required: [date, inputs, result]
+
+    DashboardStats:
+      type: object
+      properties:
+        totalCustomers:
+          type: integer
+        totalCalculations:
+          type: integer
+        netProfitMtd:
+          type: number
+        recentCalculations:
+          type: array
+          items:
+            $ref: "#/components/schemas/Calculation"
+      required: [totalCustomers, totalCalculations, netProfitMtd, recentCalculations]
