@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { useGetMe, useLogout } from "@workspace/api-client-react";
 import { Button } from "./ui/button";
+import { cn } from "@/lib/utils";
 import { Loader2, LayoutDashboard, Calculator, Users, FileText, Settings, LogOut, Menu, X } from "lucide-react";
 
 export function Layout({ children }: { children: React.ReactNode }) {
