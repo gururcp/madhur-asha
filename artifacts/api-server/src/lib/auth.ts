@@ -14,7 +14,9 @@ export function setupPassport() {
     return;
   }
 
-  const callbackURL = process.env.GOOGLE_CALLBACK_URL || "/api/auth/google/callback";
+  const domain = process.env.REPLIT_DOMAINS?.split(",")[0];
+  const callbackURL = process.env.GOOGLE_CALLBACK_URL ||
+    (domain ? `https://${domain}/api/auth/google/callback` : "/api/auth/google/callback");
 
   passport.use(
     new GoogleStrategy(
