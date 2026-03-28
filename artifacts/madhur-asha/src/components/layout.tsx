@@ -1,15 +1,45 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { useGetMe, useLogout } from "@workspace/api-client-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "./ui/button";
 import { cn } from "@/lib/utils";
-import { Loader2, LayoutDashboard, Calculator, Users, FileText, Settings, LogOut, X, ChevronRight } from "lucide-react";
+import { Loader2, LayoutDashboard, Calculator, Users, FileText, Settings, LogOut, X, ChevronRight, CheckCircle2 } from "lucide-react";
 
 export function Layout({ children }: { children: React.ReactNode }) {
-  const { data: user, isLoading, isError } = useGetMe({ query: { retry: false } });
+  const { data: user, isLoading, isError, refetch } = useGetMe({ query: { retry: false } });
   const logoutMutation = useLogout();
+  const queryClient = useQueryClient();
   const [location] = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [approved, setApproved] = useState(false);
+
+  const handleLogout = () => {
+    logoutMutation.mutate(undefined, {
+      onSuccess: () => {
+        queryClient.clear();
+        window.location.href = "/";
+      },
+      onError: () => {
+        queryClient.clear();
+        window.location.href = "/";
+      }
+    });
+  };
+
+  // Poll every 5 s while pending so the screen auto-updates when admin approves
+  useEffect(() => {
+    if (user?.status !== "pending") return;
+    const interval = setInterval(async () => {
+      const result = await refetch();
+      if (result.data?.status === "approved") {
+        setApproved(true);
+        clearInterval(interval);
+        setTimeout(() => { window.location.href = "/dashboard"; }, 1500);
+      }
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [user?.status, refetch]);
 
   if (isLoading) {
     return (
@@ -31,16 +61,38 @@ export function Layout({ children }: { children: React.ReactNode }) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <div className="max-w-md w-full text-center space-y-6 bg-card p-8 rounded-3xl shadow-xl border border-border/50">
-          <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
-            <Loader2 className="w-10 h-10 text-primary animate-spin" />
-          </div>
-          <h2 className="text-3xl font-display font-bold">Awaiting Approval</h2>
-          <p className="text-muted-foreground">
-            Your access request has been sent to Manish and Guru. You will be able to access the portal once approved.
-          </p>
-          <Button onClick={() => logoutMutation.mutate(undefined, { onSuccess: () => window.location.href = "/" })} variant="outline" className="mt-4">
-            Sign Out
-          </Button>
+          {approved ? (
+            <>
+              <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
+                <CheckCircle2 className="w-10 h-10 text-primary" />
+              </div>
+              <h2 className="text-3xl font-display font-bold text-primary">Access Granted!</h2>
+              <p className="text-muted-foreground">Redirecting you to the dashboard...</p>
+              <Loader2 className="w-6 h-6 text-primary animate-spin mx-auto" />
+            </>
+          ) : (
+            <>
+              <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
+                <Loader2 className="w-10 h-10 text-primary animate-spin" />
+              </div>
+              <h2 className="text-3xl font-display font-bold">Awaiting Approval</h2>
+              <p className="text-muted-foreground">
+                Your access request has been sent to Manish and Guru. This page will automatically update once you're approved.
+              </p>
+              <div className="text-xs text-muted-foreground bg-muted/40 rounded-lg px-3 py-2">
+                Checking for updates every 5 seconds...
+              </div>
+              <Button
+                onClick={handleLogout}
+                isLoading={logoutMutation.isPending}
+                variant="outline"
+                className="mt-2 w-full"
+              >
+                <LogOut className="w-4 h-4 mr-2" />
+                Sign Out
+              </Button>
+            </>
+          )}
         </div>
       </div>
     );
@@ -55,21 +107,21 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </div>
           <h2 className="text-3xl font-display font-bold">Access Denied</h2>
           <p className="text-muted-foreground">
-            Your request to access the portal was not approved. Please contact the administrators if you believe this is an error.
+            Your request was not approved. Contact the administrators if you believe this is an error.
           </p>
-          <Button onClick={() => logoutMutation.mutate(undefined, { onSuccess: () => window.location.href = "/" })} variant="outline" className="mt-4">
+          <Button
+            onClick={handleLogout}
+            isLoading={logoutMutation.isPending}
+            variant="outline"
+            className="mt-2 w-full"
+          >
+            <LogOut className="w-4 h-4 mr-2" />
             Sign Out
           </Button>
         </div>
       </div>
     );
   }
-
-  const handleLogout = () => {
-    logoutMutation.mutate(undefined, {
-      onSuccess: () => { window.location.href = "/"; }
-    });
-  };
 
   const navItems = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, show: true },
@@ -200,7 +252,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             key={item.href}
             href={item.href}
             className={cn(
-              "flex-1 flex flex-col items-center justify-center py-2.5 gap-0.5 transition-all text-xs font-semibold",
+              "flex-1 flex flex-col items-center justify-center py-2.5 gap-0.5 transition-all text-xs font-semibold relative",
               location === item.href
                 ? "text-primary"
                 : "text-muted-foreground"

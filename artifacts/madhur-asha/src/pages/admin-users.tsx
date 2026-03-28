@@ -8,7 +8,7 @@ import { format } from "date-fns";
 import { ShieldCheck, XCircle, CheckCircle2, Users } from "lucide-react";
 
 export default function AdminUsersPage() {
-  const { data: users, refetch } = useListUsers();
+  const { data: users, refetch } = useListUsers({ query: { refetchInterval: 10000 } });
   const { data: customers } = useListCustomers();
 
   const approveMutation = useApproveUser();
