@@ -56,8 +56,9 @@ export default function Landing() {
 
           <Button
             onClick={() => {
-              // In dev: use localhost:3000, in prod: use relative URL (Vercel proxy)
-              const apiBaseUrl = import.meta.env.DEV ? "http://localhost:3000" : "";
+              const apiBaseUrl = import.meta.env.VITE_API_URL || (
+                import.meta.env.DEV ? "http://localhost:3000" : ""
+              );
               window.location.href = `${apiBaseUrl}/api/auth/google`;
             }}
             size="lg"

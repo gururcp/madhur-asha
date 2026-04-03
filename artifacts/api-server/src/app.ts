@@ -93,9 +93,9 @@ app.use(
     cookie: {
       secure: isProd,
       httpOnly: true,
-      // With Vercel proxy, cookies are same-site, so we can use "lax"
-      // This is much more reliable than "none" which requires Partitioned
-      sameSite: "lax",
+      // CRITICAL: sameSite must be "none" for cross-origin cookies
+      // Even with Vercel proxy, the OAuth callback comes from Render domain
+      sameSite: isProd ? "none" : "lax",
       maxAge: 30 * 24 * 60 * 60 * 1000,
       path: "/",
     },
