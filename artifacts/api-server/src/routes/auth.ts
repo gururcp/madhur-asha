@@ -1,7 +1,25 @@
 import { Router, type IRouter } from "express";
 import passport from "passport";
+import crypto from "crypto";
+import { db } from "@workspace/db";
+import { usersTable } from "@workspace/db/schema";
+import { eq } from "drizzle-orm";
 
 const router: IRouter = Router();
+
+// In-memory store for one-time auth tokens
+// In production, use Redis for distributed systems
+const authTokens = new Map<string, { userId: number; expiresAt: number }>();
+
+// Cleanup expired tokens every 5 minutes
+setInterval(() => {
+  const now = Date.now();
+  for (const [token, entry] of authTokens.entries()) {
+    if (entry.expiresAt < now) {
+      authTokens.delete(token);
+    }
+  }
+}, 5 * 60 * 1000);
 
 router.get("/google", passport.authenticate("google", { scope: ["profile", "email"] }));
 
@@ -35,22 +53,27 @@ router.get(
     const normalizedBasePath =
       basePath === "/" ? "" : basePath.endsWith("/") ? basePath.slice(0, -1) : basePath;
     
-    // Redirect to frontend URL with path
+    // Generate a short-lived one-time token for auth handoff
+    // This bypasses the cross-domain cookie blocking issue
+    const token = crypto.randomBytes(32).toString("hex");
+    authTokens.set(token, {
+      userId: user.id,
+      expiresAt: Date.now() + 60_000, // 1 minute expiry
+    });
+    
+    console.log("OAuth callback: Generated auth token, redirecting to frontend");
+    
+    // Redirect to frontend URL with path and token
     const redirectTo = (path: string) => {
       // Ensure path starts with / and no double slashes
       const normalizedPath = path.startsWith("/") ? path : `/${path}`;
       const fullUrl = `${frontendUrl}${normalizedBasePath}${normalizedPath}`;
       
-      // Explicitly save session before redirecting (critical for cross-domain)
-      req.session.save((err) => {
-        if (err) {
-          console.error("Session save error:", err);
-          return res.redirect(`${frontendUrl}/?error=session_failed`);
-        }
-        
-        console.log("OAuth callback: Session saved, redirecting to", fullUrl);
-        res.redirect(fullUrl);
-      });
+      // Add auth token to URL
+      const urlWithToken = `${fullUrl}?auth_token=${token}`;
+      
+      console.log("OAuth callback: Redirecting to", urlWithToken);
+      res.redirect(urlWithToken);
     };
 
     if (user?.status === "pending") {
@@ -62,6 +85,76 @@ router.get(
     }
   }
 );
+
+router.get("/exchange-token", async (req, res) => {
+  const token = req.query.token as string;
+  
+  console.log("/api/auth/exchange-token called", { hasToken: !!token });
+  
+  if (!token) {
+    return res.status(400).json({ error: "No token provided" });
+  }
+
+  const entry = authTokens.get(token);
+  if (!entry || entry.expiresAt < Date.now()) {
+    authTokens.delete(token);
+    console.log("/api/auth/exchange-token: Invalid or expired token");
+    return res.status(401).json({ error: "Invalid or expired token" });
+  }
+
+  // One-time use token
+  authTokens.delete(token);
+
+  try {
+    // Fetch user from database
+    const [user] = await db
+      .select()
+      .from(usersTable)
+      .where(eq(usersTable.id, entry.userId))
+      .limit(1);
+
+    if (!user) {
+      console.log("/api/auth/exchange-token: User not found");
+      return res.status(401).json({ error: "User not found" });
+    }
+
+    // Log the user in using Passport
+    req.login(user, (err) => {
+      if (err) {
+        console.error("/api/auth/exchange-token: Login failed", err);
+        return res.status(500).json({ error: "Login failed" });
+      }
+      
+      // Save the session
+      req.session.save((saveErr) => {
+        if (saveErr) {
+          console.error("/api/auth/exchange-token: Session save failed", saveErr);
+          return res.status(500).json({ error: "Session save failed" });
+        }
+        
+        console.log("/api/auth/exchange-token: Success", {
+          userId: user.id,
+          sessionID: req.sessionID
+        });
+        
+        res.json({
+          success: true,
+          user: {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            picture: user.picture,
+            role: user.role,
+            status: user.status,
+          }
+        });
+      });
+    });
+  } catch (error) {
+    console.error("/api/auth/exchange-token: Error", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
 
 router.get("/me", (req, res) => {
   console.log("/api/auth/me called", {
