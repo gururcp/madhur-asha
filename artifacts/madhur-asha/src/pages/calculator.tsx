@@ -34,11 +34,191 @@ function GstSelect({ className, ...props }: React.SelectHTMLAttributes<HTMLSelec
   );
 }
 
+// Move these components outside to prevent re-creation on every render
+const ResultsPanel = ({ result, canSave, onSaveClick }: {
+  result: { purchaseExGst: number; purchaseGstAmount: number; saleExGst: number; saleGstAmount: number; netGstPayable: number; grossProfit: number; totalExpenses: number; netProfit: number };
+  canSave: boolean;
+  onSaveClick: () => void;
+}) => (
+  <Card className="bg-gradient-to-b from-primary/10 to-transparent border-primary/30 shadow-xl overflow-hidden">
+    <div className="bg-primary p-5 text-primary-foreground text-center">
+      <h3 className="text-sm font-medium opacity-90 uppercase tracking-widest mb-1">Net Profit</h3>
+      <div className="text-5xl font-display font-bold tracking-tight">
+        {formatCurrency(result.netProfit)}
+      </div>
+      <div className="mt-3 flex items-center justify-center gap-2 text-xs bg-black/20 py-1.5 px-3 rounded-full max-w-max mx-auto">
+        <CheckCircle2 className="w-3.5 h-3.5" />
+        Based on ex-GST margins
+      </div>
+    </div>
+
+    <div className="p-5 space-y-4">
+      <div className="space-y-2.5">
+        <div className="flex justify-between items-center">
+          <span className="text-muted-foreground font-medium text-sm">Sale Revenue (Ex-GST)</span>
+          <span className="font-bold text-emerald-600">{formatCurrency(result.saleExGst)}</span>
+        </div>
+        <div className="flex justify-between items-center">
+          <span className="text-muted-foreground font-medium text-sm">Purchase Cost (Ex-GST)</span>
+          <span className="font-bold text-destructive">-{formatCurrency(result.purchaseExGst)}</span>
+        </div>
+        <div className="w-full h-px bg-border my-1" />
+        <div className="flex justify-between items-center">
+          <span className="font-bold">Gross Profit</span>
+          <span className="font-bold text-lg">{formatCurrency(result.grossProfit)}</span>
+        </div>
+      </div>
+
+      <div className="pt-3 border-t border-border/50">
+        <div className="flex justify-between items-center">
+          <span className="text-muted-foreground font-medium text-sm">Total Expenses (Ex-GST)</span>
+          <span className="font-bold text-amber-600">-{formatCurrency(result.totalExpenses)}</span>
+        </div>
+      </div>
+
+      <div className="bg-card border border-border rounded-xl p-4">
+        <h4 className="font-semibold text-xs uppercase tracking-wider text-muted-foreground mb-3 flex items-center">
+          <FileText className="w-3.5 h-3.5 mr-2" /> GST Settlement
+        </h4>
+        <div className="space-y-1.5 text-sm">
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">GST Collected (Sale)</span>
+            <span>{formatCurrency(result.saleGstAmount)}</span>
+          </div>
+          <div className="flex justify-between text-muted-foreground">
+            <span>Less: ITC from Purchase</span>
+            <span>-{formatCurrency(result.purchaseGstAmount)}</span>
+          </div>
+          <div className="w-full h-px bg-border" />
+          <div className="flex justify-between font-bold text-primary pt-0.5">
+            <span>Net GST to Govt</span>
+            <span>{formatCurrency(result.netGstPayable)}</span>
+          </div>
+        </div>
+      </div>
+
+      {canSave && (
+        <Button size="lg" onClick={onSaveClick} className="w-full shadow-lg mt-2">
+          <Save className="w-5 h-5 mr-2" />
+          Save Calculation
+        </Button>
+      )}
+    </div>
+  </Card>
+);
+
+const InputsPanel = ({ register, fields, append, remove }: {
+  register: any;
+  fields: any[];
+  append: (value: any) => void;
+  remove: (index: number) => void;
+}) => (
+  <div className="space-y-4">
+    {/* Purchase */}
+    <Card className="border-t-4 border-t-destructive/80">
+      <CardHeader className="bg-muted/30 pb-3">
+        <CardTitle className="flex items-center text-base">
+          <span className="w-7 h-7 rounded-full bg-destructive/10 text-destructive flex items-center justify-center mr-3 text-xs font-bold">1</span>
+          Purchase (You Pay)
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="pt-4 grid grid-cols-2 gap-3">
+        <div className="space-y-1.5">
+          <label className="text-xs font-semibold">Amount (₹)</label>
+          <Input type="number" inputMode="decimal" {...register("purchaseAmount", { valueAsNumber: true })} className="text-base font-bold" />
+        </div>
+        <div className="space-y-1.5">
+          <label className="text-xs font-semibold">GST Rate</label>
+          <GstSelect {...register("purchaseGstRate", { valueAsNumber: true })} />
+        </div>
+        <div className="col-span-2 pt-1">
+          <label className="flex items-center space-x-2.5 cursor-pointer">
+            <input type="checkbox" {...register("purchaseInclGst")} className="w-5 h-5 rounded text-primary focus:ring-primary" />
+            <span className="font-medium text-sm">Amount includes GST</span>
+          </label>
+          <p className="text-xs text-muted-foreground mt-1 ml-7">If checked, GST portion will be extracted automatically.</p>
+        </div>
+      </CardContent>
+    </Card>
+
+    {/* Sale */}
+    <Card className="border-t-4 border-t-emerald-500">
+      <CardHeader className="bg-muted/30 pb-3">
+        <CardTitle className="flex items-center text-base">
+          <span className="w-7 h-7 rounded-full bg-emerald-500/10 text-emerald-600 flex items-center justify-center mr-3 text-xs font-bold">2</span>
+          Sale (You Receive)
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="pt-4 grid grid-cols-2 gap-3">
+        <div className="space-y-1.5">
+          <label className="text-xs font-semibold">Amount (₹)</label>
+          <Input type="number" inputMode="decimal" {...register("saleAmount", { valueAsNumber: true })} className="text-base font-bold" />
+        </div>
+        <div className="space-y-1.5">
+          <label className="text-xs font-semibold">GST Rate</label>
+          <GstSelect {...register("saleGstRate", { valueAsNumber: true })} />
+        </div>
+        <div className="col-span-2 pt-1">
+          <label className="flex items-center space-x-2.5 cursor-pointer">
+            <input type="checkbox" {...register("saleInclGst")} className="w-5 h-5 rounded text-primary focus:ring-primary" />
+            <span className="font-medium text-sm">Amount includes GST</span>
+          </label>
+        </div>
+      </CardContent>
+    </Card>
+
+    {/* Expenses */}
+    <Card className="border-t-4 border-t-amber-500">
+      <CardHeader className="bg-muted/30 pb-3 flex flex-row items-center justify-between">
+        <CardTitle className="flex items-center text-base">
+          <span className="w-7 h-7 rounded-full bg-amber-500/10 text-amber-600 flex items-center justify-center mr-3 text-xs font-bold">3</span>
+          Direct Expenses
+        </CardTitle>
+        <Button type="button" variant="outline" size="sm" onClick={() => append({ label: "", amount: 0, hasGst: false, gstRate: 18 })}>
+          <Plus className="w-4 h-4 mr-1" /> Add
+        </Button>
+      </CardHeader>
+      <CardContent className="pt-4 space-y-3">
+        {fields.map((field, index) => (
+          <div key={field.id} className="p-3 border border-border/50 rounded-xl bg-card/50 space-y-2">
+            <div className="flex gap-2 items-start">
+              <div className="flex-1 space-y-1">
+                <label className="text-xs font-semibold text-muted-foreground">Label</label>
+                <Input {...register(`expenses.${index}.label`)} placeholder="e.g. Installation" />
+              </div>
+              <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)} className="text-destructive hover:bg-destructive/10 mt-5 shrink-0">
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            </div>
+            <div className="flex gap-2 items-end">
+              <div className="flex-1 space-y-1">
+                <label className="text-xs font-semibold text-muted-foreground">Amount (₹)</label>
+                <Input type="number" inputMode="decimal" {...register(`expenses.${index}.amount`, { valueAsNumber: true })} />
+              </div>
+              <div className="flex items-center pb-2">
+                <label className="flex items-center space-x-2 text-sm cursor-pointer">
+                  <input type="checkbox" {...register(`expenses.${index}.hasGst`)} className="rounded" />
+                  <span>Has GST?</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        ))}
+
+        <div className="pt-2 border-t border-border/50 space-y-1.5">
+          <label className="text-xs font-semibold">Commission (No GST) (₹)</label>
+          <Input type="number" inputMode="decimal" {...register("commission", { valueAsNumber: true })} className="text-base" />
+        </div>
+      </CardContent>
+    </Card>
+  </div>
+);
+
 export default function CalculatorPage() {
   const { data: user } = useGetMe();
   const canSave = user?.role === 'admin' || user?.role === 'customer_access';
 
-  const { register, control, watch, setValue } = useForm<FormValues>({
+  const { register, control, watch, setValue, getValues } = useForm<FormValues>({
     defaultValues: {
       purchaseAmount: 0,
       purchaseInclGst: true,
@@ -52,7 +232,6 @@ export default function CalculatorPage() {
   });
 
   const { fields, append, remove } = useFieldArray({ control, name: "expenses" });
-  const formValues = watch();
 
   const [result, setResult] = useState({
     purchaseExGst: 0, purchaseGstAmount: 0,
@@ -61,52 +240,61 @@ export default function CalculatorPage() {
   });
 
   useEffect(() => {
-    const pAmt = Number(formValues.purchaseAmount) || 0;
-    const pRate = Number(formValues.purchaseGstRate) || 0;
-    const pExGst = formValues.purchaseInclGst ? pAmt / (1 + pRate / 100) : pAmt;
-    const pGst = formValues.purchaseInclGst ? pAmt - pExGst : pAmt * (pRate / 100);
+    const subscription = watch((formValues) => {
+      const pAmt = Number(formValues.purchaseAmount) || 0;
+      const pRate = Number(formValues.purchaseGstRate) || 0;
+      const pExGst = formValues.purchaseInclGst ? pAmt / (1 + pRate / 100) : pAmt;
+      const pGst = formValues.purchaseInclGst ? pAmt - pExGst : pAmt * (pRate / 100);
 
-    const sAmt = Number(formValues.saleAmount) || 0;
-    const sRate = Number(formValues.saleGstRate) || 0;
-    const sExGst = formValues.saleInclGst ? sAmt / (1 + sRate / 100) : sAmt;
-    const sGst = formValues.saleInclGst ? sAmt - sExGst : sAmt * (sRate / 100);
+      const sAmt = Number(formValues.saleAmount) || 0;
+      const sRate = Number(formValues.saleGstRate) || 0;
+      const sExGst = formValues.saleInclGst ? sAmt / (1 + sRate / 100) : sAmt;
+      const sGst = formValues.saleInclGst ? sAmt - sExGst : sAmt * (sRate / 100);
 
-    let expTotalExGst = 0;
-    let expTotalGst = 0;
-    formValues.expenses.forEach(exp => {
-      const amt = Number(exp.amount) || 0;
-      const rate = Number(exp.gstRate) || 0;
-      if (exp.hasGst) {
-        const ex = amt / (1 + rate / 100);
-        expTotalExGst += ex;
-        expTotalGst += (amt - ex);
-      } else {
-        expTotalExGst += amt;
-      }
+      let expTotalExGst = 0;
+      let expTotalGst = 0;
+      (formValues.expenses || []).forEach(exp => {
+        const amt = Number(exp.amount) || 0;
+        const rate = Number(exp.gstRate) || 0;
+        if (exp.hasGst) {
+          const ex = amt / (1 + rate / 100);
+          expTotalExGst += ex;
+          expTotalGst += (amt - ex);
+        } else {
+          expTotalExGst += amt;
+        }
+      });
+
+      const comm = Number(formValues.commission) || 0;
+      const totalExp = expTotalExGst + comm;
+      const gross = sExGst - pExGst;
+      const net = gross - totalExp;
+      const netGst = sGst - pGst - expTotalGst;
+
+      setResult({
+        purchaseExGst: pExGst, purchaseGstAmount: pGst,
+        saleExGst: sExGst, saleGstAmount: sGst,
+        netGstPayable: netGst, grossProfit: gross, totalExpenses: totalExp, netProfit: net
+      });
     });
-
-    const comm = Number(formValues.commission) || 0;
-    const totalExp = expTotalExGst + comm;
-    const gross = sExGst - pExGst;
-    const net = gross - totalExp;
-    const netGst = sGst - pGst - expTotalGst;
-
-    setResult({
-      purchaseExGst: pExGst, purchaseGstAmount: pGst,
-      saleExGst: sExGst, saleGstAmount: sGst,
-      netGstPayable: netGst, grossProfit: gross, totalExpenses: totalExp, netProfit: net
-    });
-  }, [formValues]);
+    return () => subscription.unsubscribe();
+  }, [watch]);
 
   const [mobileTab, setMobileTab] = useState<'inputs' | 'results'>('inputs');
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
-  const { data: customers } = useListCustomers({ query: { enabled: saveDialogOpen } });
+  const { data: customers } = useListCustomers({
+    query: {
+      enabled: saveDialogOpen,
+      queryKey: ['customers'] as const
+    }
+  });
   const saveMutation = useCreateCalculation();
   const [saveForm, setSaveForm] = useState({
     customerId: "", label: "", billNumber: "", notes: "", date: format(new Date(), 'yyyy-MM-dd')
   });
 
   const handleSave = () => {
+    const formValues = getValues();
     saveMutation.mutate({
       data: {
         customerId: saveForm.customerId ? parseInt(saveForm.customerId) : null,
@@ -124,176 +312,6 @@ export default function CalculatorPage() {
       }
     });
   };
-
-  const ResultsPanel = () => (
-    <Card className="bg-gradient-to-b from-primary/10 to-transparent border-primary/30 shadow-xl overflow-hidden">
-      <div className="bg-primary p-5 text-primary-foreground text-center">
-        <h3 className="text-sm font-medium opacity-90 uppercase tracking-widest mb-1">Net Profit</h3>
-        <div className="text-5xl font-display font-bold tracking-tight">
-          {formatCurrency(result.netProfit)}
-        </div>
-        <div className="mt-3 flex items-center justify-center gap-2 text-xs bg-black/20 py-1.5 px-3 rounded-full max-w-max mx-auto">
-          <CheckCircle2 className="w-3.5 h-3.5" />
-          Based on ex-GST margins
-        </div>
-      </div>
-
-      <div className="p-5 space-y-4">
-        <div className="space-y-2.5">
-          <div className="flex justify-between items-center">
-            <span className="text-muted-foreground font-medium text-sm">Sale Revenue (Ex-GST)</span>
-            <span className="font-bold text-emerald-600">{formatCurrency(result.saleExGst)}</span>
-          </div>
-          <div className="flex justify-between items-center">
-            <span className="text-muted-foreground font-medium text-sm">Purchase Cost (Ex-GST)</span>
-            <span className="font-bold text-destructive">-{formatCurrency(result.purchaseExGst)}</span>
-          </div>
-          <div className="w-full h-px bg-border my-1" />
-          <div className="flex justify-between items-center">
-            <span className="font-bold">Gross Profit</span>
-            <span className="font-bold text-lg">{formatCurrency(result.grossProfit)}</span>
-          </div>
-        </div>
-
-        <div className="pt-3 border-t border-border/50">
-          <div className="flex justify-between items-center">
-            <span className="text-muted-foreground font-medium text-sm">Total Expenses (Ex-GST)</span>
-            <span className="font-bold text-amber-600">-{formatCurrency(result.totalExpenses)}</span>
-          </div>
-        </div>
-
-        <div className="bg-card border border-border rounded-xl p-4">
-          <h4 className="font-semibold text-xs uppercase tracking-wider text-muted-foreground mb-3 flex items-center">
-            <FileText className="w-3.5 h-3.5 mr-2" /> GST Settlement
-          </h4>
-          <div className="space-y-1.5 text-sm">
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">GST Collected (Sale)</span>
-              <span>{formatCurrency(result.saleGstAmount)}</span>
-            </div>
-            <div className="flex justify-between text-muted-foreground">
-              <span>Less: ITC from Purchase</span>
-              <span>-{formatCurrency(result.purchaseGstAmount)}</span>
-            </div>
-            <div className="w-full h-px bg-border" />
-            <div className="flex justify-between font-bold text-primary pt-0.5">
-              <span>Net GST to Govt</span>
-              <span>{formatCurrency(result.netGstPayable)}</span>
-            </div>
-          </div>
-        </div>
-
-        {canSave && (
-          <Button size="lg" onClick={() => setSaveDialogOpen(true)} className="w-full shadow-lg mt-2">
-            <Save className="w-5 h-5 mr-2" />
-            Save Calculation
-          </Button>
-        )}
-      </div>
-    </Card>
-  );
-
-  const InputsPanel = () => (
-    <div className="space-y-4">
-      {/* Purchase */}
-      <Card className="border-t-4 border-t-destructive/80">
-        <CardHeader className="bg-muted/30 pb-3">
-          <CardTitle className="flex items-center text-base">
-            <span className="w-7 h-7 rounded-full bg-destructive/10 text-destructive flex items-center justify-center mr-3 text-xs font-bold">1</span>
-            Purchase (You Pay)
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="pt-4 grid grid-cols-2 gap-3">
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold">Amount (₹)</label>
-            <Input type="number" inputMode="decimal" {...register("purchaseAmount")} className="text-base font-bold" />
-          </div>
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold">GST Rate</label>
-            <GstSelect {...register("purchaseGstRate")} />
-          </div>
-          <div className="col-span-2 pt-1">
-            <label className="flex items-center space-x-2.5 cursor-pointer">
-              <input type="checkbox" {...register("purchaseInclGst")} className="w-5 h-5 rounded text-primary focus:ring-primary" />
-              <span className="font-medium text-sm">Amount includes GST</span>
-            </label>
-            <p className="text-xs text-muted-foreground mt-1 ml-7">If checked, GST portion will be extracted automatically.</p>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Sale */}
-      <Card className="border-t-4 border-t-emerald-500">
-        <CardHeader className="bg-muted/30 pb-3">
-          <CardTitle className="flex items-center text-base">
-            <span className="w-7 h-7 rounded-full bg-emerald-500/10 text-emerald-600 flex items-center justify-center mr-3 text-xs font-bold">2</span>
-            Sale (You Receive)
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="pt-4 grid grid-cols-2 gap-3">
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold">Amount (₹)</label>
-            <Input type="number" inputMode="decimal" {...register("saleAmount")} className="text-base font-bold" />
-          </div>
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold">GST Rate</label>
-            <GstSelect {...register("saleGstRate")} />
-          </div>
-          <div className="col-span-2 pt-1">
-            <label className="flex items-center space-x-2.5 cursor-pointer">
-              <input type="checkbox" {...register("saleInclGst")} className="w-5 h-5 rounded text-primary focus:ring-primary" />
-              <span className="font-medium text-sm">Amount includes GST</span>
-            </label>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Expenses */}
-      <Card className="border-t-4 border-t-amber-500">
-        <CardHeader className="bg-muted/30 pb-3 flex flex-row items-center justify-between">
-          <CardTitle className="flex items-center text-base">
-            <span className="w-7 h-7 rounded-full bg-amber-500/10 text-amber-600 flex items-center justify-center mr-3 text-xs font-bold">3</span>
-            Direct Expenses
-          </CardTitle>
-          <Button type="button" variant="outline" size="sm" onClick={() => append({ label: "", amount: 0, hasGst: false, gstRate: 18 })}>
-            <Plus className="w-4 h-4 mr-1" /> Add
-          </Button>
-        </CardHeader>
-        <CardContent className="pt-4 space-y-3">
-          {fields.map((field, index) => (
-            <div key={field.id} className="p-3 border border-border/50 rounded-xl bg-card/50 space-y-2">
-              <div className="flex gap-2 items-start">
-                <div className="flex-1 space-y-1">
-                  <label className="text-xs font-semibold text-muted-foreground">Label</label>
-                  <Input {...register(`expenses.${index}.label`)} placeholder="e.g. Installation" />
-                </div>
-                <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)} className="text-destructive hover:bg-destructive/10 mt-5 shrink-0">
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-              </div>
-              <div className="flex gap-2 items-end">
-                <div className="flex-1 space-y-1">
-                  <label className="text-xs font-semibold text-muted-foreground">Amount (₹)</label>
-                  <Input type="number" inputMode="decimal" {...register(`expenses.${index}.amount`)} />
-                </div>
-                <div className="flex items-center pb-2">
-                  <label className="flex items-center space-x-2 text-sm cursor-pointer">
-                    <input type="checkbox" {...register(`expenses.${index}.hasGst`)} className="rounded" />
-                    <span>Has GST?</span>
-                  </label>
-                </div>
-              </div>
-            </div>
-          ))}
-
-          <div className="pt-2 border-t border-border/50 space-y-1.5">
-            <label className="text-xs font-semibold">Commission (No GST) (₹)</label>
-            <Input type="number" inputMode="decimal" {...register("commission")} className="text-base" />
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
 
   return (
     <div className="space-y-4">
@@ -340,13 +358,13 @@ export default function CalculatorPage() {
       <div className="grid lg:grid-cols-12 gap-6">
         {/* Inputs — always visible on desktop, tab-conditional on mobile */}
         <div className={cn("lg:col-span-7", "md:block", mobileTab === 'inputs' ? 'block' : 'hidden md:block')}>
-          <InputsPanel />
+          <InputsPanel register={register} fields={fields} append={append} remove={remove} />
         </div>
 
         {/* Results */}
         <div className={cn("lg:col-span-5", "md:block", mobileTab === 'results' ? 'block' : 'hidden md:block')}>
           <div className="lg:sticky lg:top-8">
-            <ResultsPanel />
+            <ResultsPanel result={result} canSave={canSave} onSaveClick={() => setSaveDialogOpen(true)} />
           </div>
         </div>
       </div>

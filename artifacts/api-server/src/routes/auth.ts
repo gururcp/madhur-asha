@@ -7,15 +7,33 @@ router.get("/google", passport.authenticate("google", { scope: ["profile", "emai
 
 router.get(
   "/google/callback",
-  passport.authenticate("google", { failureRedirect: "/?error=auth_failed" }),
+  (req, res, next) => {
+    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+    passport.authenticate("google", {
+      failureRedirect: `${frontendUrl}/?error=auth_failed`
+    })(req, res, next);
+  },
   (req, res) => {
     const user = req.user as any;
+    
+    // Get frontend URL from environment or use default for local dev
+    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+    const basePath = process.env.BASE_PATH || "/";
+    const normalizedBasePath =
+      basePath === "/" ? "" : basePath.endsWith("/") ? basePath.slice(0, -1) : basePath;
+    
+    // Redirect to frontend URL with path
+    const redirectTo = (path: string) => {
+      const fullUrl = `${frontendUrl}${normalizedBasePath}${path}`;
+      res.redirect(fullUrl);
+    };
+
     if (user?.status === "pending") {
-      res.redirect("/?status=pending");
+      redirectTo("/?status=pending");
     } else if (user?.status === "rejected") {
-      res.redirect("/?status=rejected");
+      redirectTo("/?status=rejected");
     } else {
-      res.redirect("/dashboard");
+      redirectTo("/dashboard");
     }
   }
 );

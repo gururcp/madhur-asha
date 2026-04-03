@@ -15,8 +15,10 @@ export function setupPassport() {
   }
 
   const domain = process.env.REPLIT_DOMAINS?.split(",")[0];
-  const callbackURL = process.env.GOOGLE_CALLBACK_URL ||
-    (domain ? `https://${domain}/api/auth/google/callback` : "/api/auth/google/callback");
+  const callbackURL =
+    process.env.GOOGLE_CALLBACK_URL ||
+    process.env.FRONTEND_URL?.replace(/:\d+$/, ":3000").replace(/\/$/, "") + "/api/auth/google/callback" ||
+    (domain ? `https://${domain}/api/auth/google/callback` : "http://localhost:3000/api/auth/google/callback");
 
   passport.use(
     new GoogleStrategy(

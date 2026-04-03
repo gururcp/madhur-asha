@@ -49,6 +49,7 @@ app.use(
     store: new PgSession({
       conString: process.env.DATABASE_URL,
       tableName: "user_sessions",
+      createTableIfMissing: false,
     }),
     secret: process.env.SESSION_SECRET || "madhur-asha-secret-key",
     resave: false,
