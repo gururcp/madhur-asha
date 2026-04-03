@@ -1,6 +1,8 @@
 {
-  "buildCommand": "pnpm --filter @workspace/madhur-asha run build",
+  "version": 2,
+  "buildCommand": "pnpm run build",
   "outputDirectory": "artifacts/madhur-asha/dist/public",
+  "framework": "vite",
   "installCommand": "pnpm install --filter @workspace/madhur-asha --filter @workspace/api-client-react --filter @workspace/api-zod",
   "rewrites": [
     {
