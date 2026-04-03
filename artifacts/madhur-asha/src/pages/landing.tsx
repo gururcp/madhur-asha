@@ -2,56 +2,17 @@ import { Button } from "@/components/ui/button";
 import { useGetMe } from "@workspace/api-client-react";
 import { Loader2 } from "lucide-react";
 import { useLocation } from "wouter";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 
 export default function Landing() {
-  const [isExchangingToken, setIsExchangingToken] = useState(false);
-  const { data: user, isLoading, refetch } = useGetMe({
+  const { data: user, isLoading } = useGetMe({
     query: {
       retry: false,
       refetchOnWindowFocus: false,
-      enabled: !isExchangingToken,
+      enabled: true,
     } as any
   });
   const [, setLocation] = useLocation();
-
-  // Handle auth token from OAuth redirect
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const authToken = params.get("auth_token");
-    const status = params.get("status");
-
-    if (authToken) {
-      setIsExchangingToken(true);
-      
-      // Remove token from URL immediately for security
-      const newUrl = window.location.pathname + (status ? `?status=${status}` : '');
-      window.history.replaceState({}, "", newUrl);
-
-      const apiBaseUrl = import.meta.env.VITE_API_URL || (
-        import.meta.env.DEV ? "http://localhost:3000" : ""
-      );
-
-      fetch(`${apiBaseUrl}/api/auth/exchange-token?token=${authToken}`, {
-        credentials: "include",
-      })
-        .then((res) => {
-          if (res.ok) {
-            return res.json();
-          }
-          throw new Error("Token exchange failed");
-        })
-        .then(() => {
-          // Token exchanged successfully, refetch user data
-          refetch();
-          setIsExchangingToken(false);
-        })
-        .catch((err) => {
-          console.error("Token exchange error:", err);
-          setIsExchangingToken(false);
-        });
-    }
-  }, [refetch]);
 
   useEffect(() => {
     if (user) {
@@ -59,7 +20,7 @@ export default function Landing() {
     }
   }, [user, setLocation]);
 
-  if (isLoading || isExchangingToken) {
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="w-10 h-10 text-primary animate-spin" />
