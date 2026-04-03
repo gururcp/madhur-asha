@@ -1,5 +1,5 @@
 {
-  "buildCommand": "cd artifacts/madhur-asha && pnpm run build",
+  "buildCommand": "pnpm --filter @workspace/madhur-asha run build",
   "outputDirectory": "artifacts/madhur-asha/dist/public",
   "installCommand": "pnpm install --filter @workspace/madhur-asha --filter @workspace/api-client-react --filter @workspace/api-zod",
   "rewrites": [
