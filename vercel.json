@@ -1,9 +1,9 @@
 {
   "version": 2,
-  "buildCommand": "pnpm install && cd artifacts/madhur-asha && pnpm run build",
-  "outputDirectory": "artifacts/madhur-asha/dist",
+  "buildCommand": "pnpm run build",
+  "outputDirectory": "dist",
   "framework": "vite",
-  "installCommand": "pnpm install",
+  "installCommand": "pnpm install --filter @workspace/madhur-asha --filter @workspace/api-client-react --filter @workspace/api-zod",
   "rewrites": [
     {
       "source": "/(.*)",
