@@ -56,9 +56,12 @@ app.use(
     saveUninitialized: false,
     cookie: {
       secure: isProd,
+      httpOnly: true,
       sameSite: isProd ? "none" : "lax",
       maxAge: 30 * 24 * 60 * 60 * 1000,
+      domain: isProd ? undefined : undefined,
     },
+    proxy: isProd,
   })
 );
 

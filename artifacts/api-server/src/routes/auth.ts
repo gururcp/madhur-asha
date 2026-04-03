@@ -25,7 +25,15 @@ router.get(
     // Redirect to frontend URL with path
     const redirectTo = (path: string) => {
       const fullUrl = `${frontendUrl}${normalizedBasePath}${path}`;
-      res.redirect(fullUrl);
+      
+      // Explicitly save session before redirecting (critical for cross-domain)
+      req.session.save((err) => {
+        if (err) {
+          console.error("Session save error:", err);
+          return res.redirect(`${frontendUrl}/?error=session_failed`);
+        }
+        res.redirect(fullUrl);
+      });
     };
 
     if (user?.status === "pending") {
