@@ -4,10 +4,10 @@
   "outputDirectory": "dist/public",
   "framework": "vite",
   "installCommand": "pnpm install --filter @workspace/madhur-asha --filter @workspace/api-client-react --filter @workspace/api-zod",
-  "rewrites": [
+  "routes": [
     {
-      "source": "/(.*)",
-      "destination": "/index.html"
+      "src": "/(.*)",
+      "dest": "/index.html"
     }
   ]
 }
