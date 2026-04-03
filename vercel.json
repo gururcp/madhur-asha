@@ -1,8 +1,9 @@
 {
   "version": 2,
-  "buildCommand": "cd artifacts/madhur-asha && pnpm install && pnpm run build",
+  "buildCommand": "pnpm install && cd artifacts/madhur-asha && pnpm run build",
   "outputDirectory": "artifacts/madhur-asha/dist",
   "framework": "vite",
+  "installCommand": "pnpm install",
   "rewrites": [
     {
       "source": "/(.*)",
