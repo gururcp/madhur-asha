@@ -93,12 +93,37 @@ app.use(
       httpOnly: true,
       sameSite: isProd ? "none" : "lax",
       maxAge: 30 * 24 * 60 * 60 * 1000,
+      path: "/",
       // DO NOT set domain for cross-origin cookies with sameSite: "none"
       // The browser will handle this correctly
     },
     proxy: isProd,
   })
 );
+
+// Middleware to add Partitioned attribute to cookies for Chrome CHIPS support
+// This is critical for cross-domain cookies to work in modern browsers
+app.use((req, res, next) => {
+  const originalSetHeader = res.setHeader.bind(res);
+  res.setHeader = function(name: string, value: any) {
+    if (name.toLowerCase() === 'set-cookie' && isProd) {
+      // Add Partitioned attribute to session cookies
+      if (Array.isArray(value)) {
+        value = value.map(cookie => {
+          if (typeof cookie === 'string' && cookie.includes('madhur.sid') && !cookie.includes('Partitioned')) {
+            return cookie + '; Partitioned';
+          }
+          return cookie;
+        });
+      } else if (typeof value === 'string' && value.includes('madhur.sid') && !value.includes('Partitioned')) {
+        value = value + '; Partitioned';
+      }
+      logger.info({ setCookie: value }, 'Setting cookie with Partitioned attribute');
+    }
+    return originalSetHeader(name, value);
+  };
+  next();
+});
 
 setupPassport();
 app.use(passport.initialize());

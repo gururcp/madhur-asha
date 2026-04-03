@@ -30,14 +30,16 @@ router.get(
     });
     
     // Get frontend URL from environment or use default for local dev
-    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+    const frontendUrl = (process.env.FRONTEND_URL || "http://localhost:5173").replace(/\/$/, "");
     const basePath = process.env.BASE_PATH || "/";
     const normalizedBasePath =
       basePath === "/" ? "" : basePath.endsWith("/") ? basePath.slice(0, -1) : basePath;
     
     // Redirect to frontend URL with path
     const redirectTo = (path: string) => {
-      const fullUrl = `${frontendUrl}${normalizedBasePath}${path}`;
+      // Ensure path starts with / and no double slashes
+      const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+      const fullUrl = `${frontendUrl}${normalizedBasePath}${normalizedPath}`;
       
       // Explicitly save session before redirecting (critical for cross-domain)
       req.session.save((err) => {
