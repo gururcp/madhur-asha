@@ -50,7 +50,7 @@ export default function Landing() {
 
           <Button
             onClick={() => {
-              window.location.href = "/api/auth/google";
+              window.location.href = `${import.meta.env.VITE_API_URL}/api/auth/google`;
             }}
             size="lg"
             className="w-full sm:w-auto px-12 py-6 text-lg rounded-2xl bg-white text-foreground hover:bg-gray-50 border-2 border-border shadow-xl hover:shadow-2xl transition-all duration-300 group"
