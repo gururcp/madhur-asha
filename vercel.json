@@ -1,14 +1,5 @@
 {
   "buildCommand": "pnpm run build",
   "outputDirectory": "dist/public",
-  "installCommand": "pnpm install --filter @workspace/madhur-asha --filter @workspace/api-client-react --filter @workspace/api-zod",
-  "routes": [
-    {
-      "handle": "filesystem"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
-    }
-  ]
+  "installCommand": "pnpm install --filter @workspace/madhur-asha --filter @workspace/api-client-react --filter @workspace/api-zod"
 }
