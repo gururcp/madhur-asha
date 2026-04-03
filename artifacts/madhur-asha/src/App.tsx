@@ -1,5 +1,6 @@
 import { Switch, Route, Router as WouterRouter } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { setBaseUrl } from "@workspace/api-client-react";
 import { Layout } from "@/components/layout";
 import Landing from "@/pages/landing";
 import Dashboard from "@/pages/dashboard";
@@ -9,6 +10,14 @@ import CustomerDetailPage from "@/pages/customer-detail";
 import HistoryPage from "@/pages/history";
 import AdminUsersPage from "@/pages/admin-users";
 import NotFound from "@/pages/not-found";
+
+// Configure API base URL for all API requests
+// In development, the API server runs on a different port
+// In production, both frontend and backend are served from the same origin
+const apiBaseUrl = import.meta.env.VITE_API_URL || (
+  import.meta.env.DEV ? "http://localhost:3000" : ""
+);
+setBaseUrl(apiBaseUrl);
 
 const queryClient = new QueryClient();
 

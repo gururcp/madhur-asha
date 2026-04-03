@@ -1,0 +1,43 @@
+# Render Blueprint for Madhur Asha Enterprises
+# This file configures automatic deployment to Render
+
+services:
+  # Backend API Server
+  - type: web
+    name: madhur-asha-api
+    runtime: node
+    plan: free
+    region: singapore
+    buildCommand: pnpm install && pnpm run build
+    startCommand: cd artifacts/api-server && pnpm run start
+    envVars:
+      - key: NODE_VERSION
+        value: 24
+      - key: PORT
+        generateValue: true
+      - key: NODE_ENV
+        value: production
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_CALLBACK_URL
+        sync: false
+      - key: DATABASE_URL
+        fromDatabase:
+          name: madhur-asha-db
+          property: connectionString
+      - key: FRONTEND_URL
+        value: https://madhur-asha.vercel.app
+
+databases:
+  # PostgreSQL Database
+  - name: madhur-asha-db
+    plan: free
+    databaseName: madhur_asha
+    user: madhur_asha_user
+    region: singapore
+
+# Made with Bob
