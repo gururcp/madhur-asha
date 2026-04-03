@@ -16,6 +16,19 @@ router.get(
   (req, res) => {
     const user = req.user as any;
     
+    if (!user) {
+      console.error("OAuth callback: No user found after authentication");
+      const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+      return res.redirect(`${frontendUrl}/?error=no_user`);
+    }
+    
+    console.log("OAuth callback: User authenticated", {
+      userId: user.id,
+      email: user.email,
+      sessionID: req.sessionID,
+      hasSession: !!req.session,
+    });
+    
     // Get frontend URL from environment or use default for local dev
     const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
     const basePath = process.env.BASE_PATH || "/";
@@ -32,6 +45,8 @@ router.get(
           console.error("Session save error:", err);
           return res.redirect(`${frontendUrl}/?error=session_failed`);
         }
+        
+        console.log("OAuth callback: Session saved, redirecting to", fullUrl);
         res.redirect(fullUrl);
       });
     };
@@ -47,10 +62,22 @@ router.get(
 );
 
 router.get("/me", (req, res) => {
+  console.log("/api/auth/me called", {
+    isAuthenticated: req.isAuthenticated(),
+    hasUser: !!req.user,
+    hasSession: !!req.session,
+    sessionID: req.sessionID,
+    cookies: req.headers.cookie,
+  });
+  
   if (!req.isAuthenticated() || !req.user) {
+    console.log("/api/auth/me: User not authenticated");
     return res.status(401).json({ error: "Unauthorized" });
   }
+  
   const user = req.user as any;
+  console.log("/api/auth/me: User authenticated", { userId: user.id, email: user.email });
+  
   res.json({
     id: user.id,
     googleId: user.googleId,

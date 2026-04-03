@@ -30,27 +30,52 @@ app.use(
   }),
 );
 
+const isProd = process.env.NODE_ENV === "production";
+
+// Trust proxy - critical for Render deployment
+app.set("trust proxy", 1);
+
+// CORS configuration - must be explicit for credentials
+const allowedOrigins = process.env.FRONTEND_URL
+  ? [process.env.FRONTEND_URL]
+  : ["http://localhost:5173", "http://localhost:5174"];
+
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || true,
+    origin: (origin, callback) => {
+      // Allow requests with no origin (mobile apps, Postman, etc.)
+      if (!origin) return callback(null, true);
+      
+      if (allowedOrigins.some(allowed => origin.startsWith(allowed))) {
+        callback(null, true);
+      } else {
+        callback(new Error(`Origin ${origin} not allowed by CORS`));
+      }
+    },
     credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-const isProd = process.env.NODE_ENV === "production";
-app.set("trust proxy", 1);
-
 const PgSession = connectPgSimple(session);
+
+// Session store with error handling
+const sessionStore = new PgSession({
+  conString: process.env.DATABASE_URL,
+  tableName: "user_sessions",
+  createTableIfMissing: false,
+  errorLog: (err) => {
+    logger.error({ err }, "Session store error");
+  },
+});
 
 app.use(
   session({
-    store: new PgSession({
-      conString: process.env.DATABASE_URL,
-      tableName: "user_sessions",
-      createTableIfMissing: false,
-    }),
+    store: sessionStore,
     name: "madhur.sid",
     secret: process.env.SESSION_SECRET || "madhur-asha-secret-key",
     resave: false,
@@ -60,6 +85,8 @@ app.use(
       httpOnly: true,
       sameSite: isProd ? "none" : "lax",
       maxAge: 30 * 24 * 60 * 60 * 1000,
+      // DO NOT set domain for cross-origin cookies with sameSite: "none"
+      // The browser will handle this correctly
     },
     proxy: isProd,
   })
