@@ -8,6 +8,19 @@ A full-stack business management portal with an intelligent GST (Goods and Servi
 
 ---
 
+## 🚀 Quick Start - Deploy in 35 Minutes (Forever Free!)
+
+**👉 Follow [SETUP-WITH-NEON.md](SETUP-WITH-NEON.md) for complete setup guide**
+
+This guide includes:
+- ✅ Neon PostgreSQL (forever free database)
+- ✅ Local development setup
+- ✅ Production deployment (Render + Vercel)
+- ✅ No credit card required
+- ✅ Perfect for 2 users
+
+---
+
 ## 🎯 Features
 
 ### 📊 GST Profit Calculator
