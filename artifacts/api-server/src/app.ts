@@ -36,9 +36,11 @@ const isProd = process.env.NODE_ENV === "production";
 app.set("trust proxy", 1);
 
 // CORS configuration - must be explicit for credentials
-const allowedOrigins = process.env.FRONTEND_URL
-  ? [process.env.FRONTEND_URL]
-  : ["http://localhost:5173", "http://localhost:5174"];
+const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+// Normalize: remove trailing slash and ensure we have the base URL
+const normalizedFrontendUrl = frontendUrl.replace(/\/$/, "");
+
+logger.info({ frontendUrl: normalizedFrontendUrl }, "CORS configured for frontend URL");
 
 app.use(
   cors({
@@ -46,9 +48,15 @@ app.use(
       // Allow requests with no origin (mobile apps, Postman, etc.)
       if (!origin) return callback(null, true);
       
-      if (allowedOrigins.some(allowed => origin.startsWith(allowed))) {
+      // Normalize the incoming origin
+      const normalizedOrigin = origin.replace(/\/$/, "");
+      
+      // Check if origin matches (exact match or starts with for subdomains)
+      if (normalizedOrigin === normalizedFrontendUrl ||
+          normalizedOrigin.startsWith(normalizedFrontendUrl)) {
         callback(null, true);
       } else {
+        logger.warn({ origin, expected: normalizedFrontendUrl }, "CORS origin rejected");
         callback(new Error(`Origin ${origin} not allowed by CORS`));
       }
     },
