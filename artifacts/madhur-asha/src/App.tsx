@@ -12,11 +12,9 @@ import AdminUsersPage from "@/pages/admin-users";
 import NotFound from "@/pages/not-found";
 
 // Configure API base URL for all API requests
-// In development, the API server runs on a different port
-// In production, both frontend and backend are served from the same origin
-const apiBaseUrl = import.meta.env.VITE_API_URL || (
-  import.meta.env.DEV ? "http://localhost:3000" : ""
-);
+// In development, the API server runs on a different port (localhost:3000)
+// In production, Vercel proxies /api/* to Render, so we use relative URLs
+const apiBaseUrl = import.meta.env.DEV ? "http://localhost:3000" : "";
 setBaseUrl(apiBaseUrl);
 
 const queryClient = new QueryClient();

@@ -32,28 +32,30 @@ app.use(
 
 const isProd = process.env.NODE_ENV === "production";
 
-// Trust proxy - critical for Render deployment
+// Trust proxy - critical for Render deployment behind Vercel proxy
 app.set("trust proxy", 1);
 
-// CORS configuration - must be explicit for credentials
+// CORS configuration
+// In production: Vercel proxies requests, so they appear to come from Vercel's origin
+// In development: Allow localhost
 const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
-// Normalize: remove trailing slash and ensure we have the base URL
 const normalizedFrontendUrl = frontendUrl.replace(/\/$/, "");
 
-logger.info({ frontendUrl: normalizedFrontendUrl }, "CORS configured for frontend URL");
+logger.info({ frontendUrl: normalizedFrontendUrl, isProd }, "CORS configured");
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (mobile apps, Postman, etc.)
+      // Allow requests with no origin (same-origin requests from Vercel proxy, Postman, etc.)
       if (!origin) return callback(null, true);
       
       // Normalize the incoming origin
       const normalizedOrigin = origin.replace(/\/$/, "");
       
-      // Check if origin matches (exact match or starts with for subdomains)
+      // Check if origin matches
       if (normalizedOrigin === normalizedFrontendUrl ||
-          normalizedOrigin.startsWith(normalizedFrontendUrl)) {
+          normalizedOrigin.startsWith(normalizedFrontendUrl) ||
+          normalizedOrigin.startsWith("http://localhost")) {
         callback(null, true);
       } else {
         logger.warn({ origin, expected: normalizedFrontendUrl }, "CORS origin rejected");
@@ -91,34 +93,22 @@ app.use(
     cookie: {
       secure: isProd,
       httpOnly: true,
-      sameSite: isProd ? "none" : "lax",
+      // With Vercel proxy, cookies are same-site, so we can use "lax"
+      // This is much more reliable than "none" which requires Partitioned
+      sameSite: "lax",
       maxAge: 30 * 24 * 60 * 60 * 1000,
       path: "/",
-      // DO NOT set domain for cross-origin cookies with sameSite: "none"
-      // The browser will handle this correctly
     },
     proxy: isProd,
   })
 );
 
-// Middleware to add Partitioned attribute to cookies for Chrome CHIPS support
-// This is critical for cross-domain cookies to work in modern browsers
+// Debug middleware to log cookie setting
 app.use((req, res, next) => {
   const originalSetHeader = res.setHeader.bind(res);
   res.setHeader = function(name: string, value: any) {
-    if (name.toLowerCase() === 'set-cookie' && isProd) {
-      // Add Partitioned attribute to session cookies
-      if (Array.isArray(value)) {
-        value = value.map(cookie => {
-          if (typeof cookie === 'string' && cookie.includes('madhur.sid') && !cookie.includes('Partitioned')) {
-            return cookie + '; Partitioned';
-          }
-          return cookie;
-        });
-      } else if (typeof value === 'string' && value.includes('madhur.sid') && !value.includes('Partitioned')) {
-        value = value + '; Partitioned';
-      }
-      logger.info({ setCookie: value }, 'Setting cookie with Partitioned attribute');
+    if (name.toLowerCase() === 'set-cookie') {
+      logger.info({ setCookie: value }, 'Setting cookie header');
     }
     return originalSetHeader(name, value);
   };
