@@ -1,13 +1,11 @@
 {
-  "version": 2,
-  "buildCommand": "pnpm run build",
-  "outputDirectory": "dist/public",
-  "framework": "vite",
+  "buildCommand": "cd artifacts/madhur-asha && pnpm run build",
+  "outputDirectory": "artifacts/madhur-asha/dist/public",
   "installCommand": "pnpm install --filter @workspace/madhur-asha --filter @workspace/api-client-react --filter @workspace/api-zod",
-  "routes": [
+  "rewrites": [
     {
-      "src": "/(.*)",
-      "dest": "/index.html"
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ]
 }
