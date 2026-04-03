@@ -43,6 +43,15 @@ This guide sets up:
 3. It looks like:
    ```
    postgresql://username:password@ep-xxx.ap-southeast-1.aws.neon.tech/neondb?sslmode=require
+   postgresql://neondb_owner:npg_c4YfDNUeqFs7@ep-aged-union-a18uxwg9.ap-southeast-1.aws.neon.tech/neondb?sslmode=require
+
+   Host   ep-aged-union-a18uxwg9.ap-southeast-1.aws.neon.tech
+   Database   neondb
+   Role   neondb_owner
+   Password   npg_c4YfDNUeqFs7
+   Pooler host   ep-aged-union-a18uxwg9-pooler.ap-southeast-1.aws.neon.tech
+   Connect your app to neon with single command - npx neonctl@latest init
+ 
    ```
 4. **Save this** - you'll need it for both local and production!
 
@@ -54,7 +63,7 @@ If you want separate dev and prod databases:
 2. Project name: `madhur-asha-dev`
 3. Same region and version
 4. Copy this connection string for local development
-
+postgresql://neondb_owner:npg_9D5pqXZKkTev@ep-plain-rain-a1h1hxei-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
 ---
 
 ## Part 2: Set Up Local Development (10 minutes)
@@ -72,7 +81,7 @@ Open `.env` and add your Neon connection string:
 
 ```bash
 # Database - Use your Neon connection string
-DATABASE_URL=postgresql://username:password@ep-xxx.ap-southeast-1.aws.neon.tech/neondb?sslmode=require
+postgresql://neondb_owner:npg_9D5pqXZKkTev@ep-plain-rain-a1h1hxei-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
 
 # Server
 PORT=3000
