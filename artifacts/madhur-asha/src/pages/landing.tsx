@@ -5,7 +5,13 @@ import { useLocation } from "wouter";
 import { useEffect } from "react";
 
 export default function Landing() {
-  const { data: user, isLoading } = useGetMe({ query: { retry: false } });
+  const { data: user, isLoading } = useGetMe({
+    query: {
+      retry: false,
+      refetchOnWindowFocus: false,
+      enabled: true,
+    } as any
+  });
   const [, setLocation] = useLocation();
 
   useEffect(() => {

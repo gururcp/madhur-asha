@@ -32,7 +32,7 @@ app.use(
 
 app.use(
   cors({
-    origin: true,
+    origin: process.env.FRONTEND_URL || true,
     credentials: true,
   })
 );
@@ -51,6 +51,7 @@ app.use(
       tableName: "user_sessions",
       createTableIfMissing: false,
     }),
+    name: "madhur.sid",
     secret: process.env.SESSION_SECRET || "madhur-asha-secret-key",
     resave: false,
     saveUninitialized: false,
@@ -59,7 +60,6 @@ app.use(
       httpOnly: true,
       sameSite: isProd ? "none" : "lax",
       maxAge: 30 * 24 * 60 * 60 * 1000,
-      domain: isProd ? undefined : undefined,
     },
     proxy: isProd,
   })

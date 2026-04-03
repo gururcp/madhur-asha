@@ -69,7 +69,7 @@ router.post("/logout", (req, res, next) => {
     if (err) return next(err);
     req.session.destroy((destroyErr) => {
       if (destroyErr) return next(destroyErr);
-      res.clearCookie("connect.sid");
+      res.clearCookie("madhur.sid");
       res.json({ message: "Logged out" });
     });
   });
