@@ -93,7 +93,7 @@ router.get("/lookup", requireApproved, async (req, res, next) => {
     ].filter(part => part && part.trim());
     
     const mappedData = {
-      name: toTitleCase(data?.legalName || data?.tradeName || ''),
+      name: toTitleCase(data?.tradeName || data?.legalName || ''),
       gstStatus: data?.status || '',
       address: addressParts.map(toTitleCase).join(', '),
       state: toTitleCase(stateName || ''),
