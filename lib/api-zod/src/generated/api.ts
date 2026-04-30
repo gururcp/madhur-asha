@@ -96,14 +96,50 @@ export const RejectUserResponse = zod.object({
 });
 
 /**
+ * Fetches GST registration details from government records via RapidAPI
+ * @summary Lookup GST details by GSTIN
+ */
+export const lookupGSTQueryGstinRegExp = new RegExp(
+  "^\\d{2}[A-Z]{5}\\d{4}[A-Z]{1}[A-Z\\d]{1}Z[A-Z\\d]{1}$",
+);
+
+export const LookupGSTQueryParams = zod.object({
+  gstin: zod.coerce
+    .string()
+    .regex(lookupGSTQueryGstinRegExp)
+    .describe("15-character GSTIN to lookup"),
+});
+
+export const LookupGSTResponse = zod.object({
+  name: zod.string().describe("Legal name (becomes Business Name)"),
+  gstStatus: zod
+    .enum(["Active", "Cancelled"])
+    .describe("Current GST registration status"),
+  address: zod.string().describe("Complete principal business address"),
+  state: zod.string().describe("State of registration"),
+  pincode: zod.string().describe("Pincode of principal address"),
+});
+
+/**
  * @summary List customers
  */
 export const ListCustomersResponseItem = zod.object({
   id: zod.number(),
-  name: zod.string(),
+  name: zod.string().describe("Business Name (Legal Name from GST)"),
   gstin: zod.string().nullish(),
   address: zod.string().nullish(),
   contact: zod.string().nullish(),
+  contactPerson: zod.string().nullish(),
+  gstStatus: zod
+    .string()
+    .nullish()
+    .describe("GST registration status (Active\/Cancelled)"),
+  state: zod.string().nullish(),
+  pincode: zod.string().nullish(),
+  zohoId: zod.string().nullish(),
+  zohoSyncStatus: zod.enum(["pending", "syncing", "synced", "error"]).nullish(),
+  zohoSyncedAt: zod.date().nullish(),
+  zohoErrorMessage: zod.string().nullish(),
   createdAt: zod.date(),
   calculationCount: zod.number(),
 });
@@ -116,7 +152,11 @@ export const CreateCustomerBody = zod.object({
   name: zod.string(),
   gstin: zod.string().nullish(),
   address: zod.string().nullish(),
-  contact: zod.string().nullish(),
+  contact: zod.string().optional(),
+  contactPerson: zod.string().nullish(),
+  gstStatus: zod.string().nullish(),
+  state: zod.string().nullish(),
+  pincode: zod.string().nullish(),
 });
 
 /**
@@ -128,10 +168,21 @@ export const GetCustomerParams = zod.object({
 
 export const GetCustomerResponse = zod.object({
   id: zod.number(),
-  name: zod.string(),
+  name: zod.string().describe("Business Name (Legal Name from GST)"),
   gstin: zod.string().nullish(),
   address: zod.string().nullish(),
   contact: zod.string().nullish(),
+  contactPerson: zod.string().nullish(),
+  gstStatus: zod
+    .string()
+    .nullish()
+    .describe("GST registration status (Active\/Cancelled)"),
+  state: zod.string().nullish(),
+  pincode: zod.string().nullish(),
+  zohoId: zod.string().nullish(),
+  zohoSyncStatus: zod.enum(["pending", "syncing", "synced", "error"]).nullish(),
+  zohoSyncedAt: zod.date().nullish(),
+  zohoErrorMessage: zod.string().nullish(),
   createdAt: zod.date(),
   calculationCount: zod.number(),
 });
@@ -147,15 +198,30 @@ export const UpdateCustomerBody = zod.object({
   name: zod.string(),
   gstin: zod.string().nullish(),
   address: zod.string().nullish(),
-  contact: zod.string().nullish(),
+  contact: zod.string().optional(),
+  contactPerson: zod.string().nullish(),
+  gstStatus: zod.string().nullish(),
+  state: zod.string().nullish(),
+  pincode: zod.string().nullish(),
 });
 
 export const UpdateCustomerResponse = zod.object({
   id: zod.number(),
-  name: zod.string(),
+  name: zod.string().describe("Business Name (Legal Name from GST)"),
   gstin: zod.string().nullish(),
   address: zod.string().nullish(),
   contact: zod.string().nullish(),
+  contactPerson: zod.string().nullish(),
+  gstStatus: zod
+    .string()
+    .nullish()
+    .describe("GST registration status (Active\/Cancelled)"),
+  state: zod.string().nullish(),
+  pincode: zod.string().nullish(),
+  zohoId: zod.string().nullish(),
+  zohoSyncStatus: zod.enum(["pending", "syncing", "synced", "error"]).nullish(),
+  zohoSyncedAt: zod.date().nullish(),
+  zohoErrorMessage: zod.string().nullish(),
   createdAt: zod.date(),
   calculationCount: zod.number(),
 });
@@ -169,6 +235,391 @@ export const DeleteCustomerParams = zod.object({
 
 export const DeleteCustomerResponse = zod.object({
   message: zod.string(),
+});
+
+/**
+ * @summary Push customer to Zoho Books (admin only)
+ */
+export const PushCustomerToZohoParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const PushCustomerToZohoResponse = zod.object({
+  message: zod.string().optional(),
+  zohoId: zod.string().optional(),
+});
+
+/**
+ * @summary List suppliers
+ */
+export const ListSuppliersResponseItem = zod.object({
+  id: zod.number(),
+  businessName: zod.string(),
+  gstin: zod.string().nullish(),
+  contactPerson: zod.string().nullish(),
+  status: zod.string().nullish(),
+  address: zod.string().nullish(),
+  state: zod.string().nullish(),
+  pincode: zod.string().nullish(),
+  contactInfo: zod.string().nullish(),
+  paymentTerms: zod.string().nullish(),
+  bankAccount: zod
+    .object({
+      accountNo: zod.string().optional(),
+      ifsc: zod.string().optional(),
+      bankName: zod.string().optional(),
+    })
+    .nullish(),
+  zohoId: zod.string().nullish(),
+  zohoSyncStatus: zod.enum(["pending", "syncing", "synced", "error"]).nullish(),
+  zohoSyncedAt: zod.date().nullish(),
+  zohoErrorMessage: zod.string().nullish(),
+  createdAt: zod.date(),
+  updatedAt: zod.date(),
+});
+export const ListSuppliersResponse = zod.array(ListSuppliersResponseItem);
+
+/**
+ * @summary Create a supplier
+ */
+export const CreateSupplierBody = zod.object({
+  businessName: zod.string(),
+  gstin: zod.string().nullish(),
+  contactPerson: zod.string().nullish(),
+  status: zod.string().nullish(),
+  address: zod.string().nullish(),
+  state: zod.string().nullish(),
+  pincode: zod.string().nullish(),
+  contactInfo: zod.string().nullish(),
+  paymentTerms: zod
+    .enum(["Net 7", "Net 15", "Net 30", "Net 45", "Net 60"])
+    .nullish(),
+  bankAccount: zod
+    .object({
+      accountNo: zod.string().optional(),
+      ifsc: zod.string().optional(),
+      bankName: zod.string().optional(),
+    })
+    .nullish(),
+});
+
+/**
+ * @summary Get a supplier
+ */
+export const GetSupplierParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const GetSupplierResponse = zod.object({
+  id: zod.number(),
+  businessName: zod.string(),
+  gstin: zod.string().nullish(),
+  contactPerson: zod.string().nullish(),
+  status: zod.string().nullish(),
+  address: zod.string().nullish(),
+  state: zod.string().nullish(),
+  pincode: zod.string().nullish(),
+  contactInfo: zod.string().nullish(),
+  paymentTerms: zod.string().nullish(),
+  bankAccount: zod
+    .object({
+      accountNo: zod.string().optional(),
+      ifsc: zod.string().optional(),
+      bankName: zod.string().optional(),
+    })
+    .nullish(),
+  zohoId: zod.string().nullish(),
+  zohoSyncStatus: zod.enum(["pending", "syncing", "synced", "error"]).nullish(),
+  zohoSyncedAt: zod.date().nullish(),
+  zohoErrorMessage: zod.string().nullish(),
+  createdAt: zod.date(),
+  updatedAt: zod.date(),
+});
+
+/**
+ * @summary Update a supplier
+ */
+export const UpdateSupplierParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const UpdateSupplierBody = zod.object({
+  businessName: zod.string(),
+  gstin: zod.string().nullish(),
+  contactPerson: zod.string().nullish(),
+  status: zod.string().nullish(),
+  address: zod.string().nullish(),
+  state: zod.string().nullish(),
+  pincode: zod.string().nullish(),
+  contactInfo: zod.string().nullish(),
+  paymentTerms: zod
+    .enum(["Net 7", "Net 15", "Net 30", "Net 45", "Net 60"])
+    .nullish(),
+  bankAccount: zod
+    .object({
+      accountNo: zod.string().optional(),
+      ifsc: zod.string().optional(),
+      bankName: zod.string().optional(),
+    })
+    .nullish(),
+});
+
+export const UpdateSupplierResponse = zod.object({
+  id: zod.number(),
+  businessName: zod.string(),
+  gstin: zod.string().nullish(),
+  contactPerson: zod.string().nullish(),
+  status: zod.string().nullish(),
+  address: zod.string().nullish(),
+  state: zod.string().nullish(),
+  pincode: zod.string().nullish(),
+  contactInfo: zod.string().nullish(),
+  paymentTerms: zod.string().nullish(),
+  bankAccount: zod
+    .object({
+      accountNo: zod.string().optional(),
+      ifsc: zod.string().optional(),
+      bankName: zod.string().optional(),
+    })
+    .nullish(),
+  zohoId: zod.string().nullish(),
+  zohoSyncStatus: zod.enum(["pending", "syncing", "synced", "error"]).nullish(),
+  zohoSyncedAt: zod.date().nullish(),
+  zohoErrorMessage: zod.string().nullish(),
+  createdAt: zod.date(),
+  updatedAt: zod.date(),
+});
+
+/**
+ * @summary Delete a supplier
+ */
+export const DeleteSupplierParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const DeleteSupplierResponse = zod.object({
+  message: zod.string(),
+});
+
+/**
+ * @summary Push supplier to Zoho Books (admin only)
+ */
+export const PushSupplierToZohoParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const PushSupplierToZohoResponse = zod.object({
+  message: zod.string().optional(),
+  zohoId: zod.string().optional(),
+});
+
+/**
+ * @summary List items
+ */
+export const ListItemsResponseItem = zod.object({
+  id: zod.number(),
+  name: zod.string(),
+  hsnCode: zod.string().describe("4-8 digit HSN\/SAC code"),
+  description: zod.string().nullish(),
+  unit: zod.enum([
+    "Nos",
+    "Kg",
+    "Grams",
+    "Litre",
+    "Metre",
+    "Box",
+    "Bag",
+    "Piece",
+    "Set",
+  ]),
+  purchaseRate: zod.string().describe("Stored as string for precision"),
+  sellingRate: zod.string().describe("Stored as string for precision"),
+  gstRate: zod.enum(["0", "5", "12", "18", "28"]),
+  itemType: zod.enum(["goods", "service"]),
+  zohoId: zod.string().nullish(),
+  zohoSyncStatus: zod.enum(["pending", "syncing", "synced", "error"]).nullish(),
+  zohoSyncedAt: zod.date().nullish(),
+  zohoErrorMessage: zod.string().nullish(),
+  createdAt: zod.date(),
+  updatedAt: zod.date(),
+});
+export const ListItemsResponse = zod.array(ListItemsResponseItem);
+
+/**
+ * @summary Create an item
+ */
+export const createItemBodyHsnCodeRegExp = new RegExp("^\\d{4,8}$");
+
+export const CreateItemBody = zod.object({
+  name: zod.string(),
+  hsnCode: zod
+    .string()
+    .regex(createItemBodyHsnCodeRegExp)
+    .describe("4-8 digit HSN\/SAC code"),
+  description: zod.string().nullish(),
+  unit: zod.enum([
+    "Nos",
+    "Kg",
+    "Grams",
+    "Litre",
+    "Metre",
+    "Box",
+    "Bag",
+    "Piece",
+    "Set",
+  ]),
+  purchaseRate: zod.string(),
+  sellingRate: zod.string(),
+  gstRate: zod.enum(["0", "5", "12", "18", "28"]),
+  itemType: zod.enum(["goods", "service"]),
+});
+
+/**
+ * @summary Get an item
+ */
+export const GetItemParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const GetItemResponse = zod.object({
+  id: zod.number(),
+  name: zod.string(),
+  hsnCode: zod.string().describe("4-8 digit HSN\/SAC code"),
+  description: zod.string().nullish(),
+  unit: zod.enum([
+    "Nos",
+    "Kg",
+    "Grams",
+    "Litre",
+    "Metre",
+    "Box",
+    "Bag",
+    "Piece",
+    "Set",
+  ]),
+  purchaseRate: zod.string().describe("Stored as string for precision"),
+  sellingRate: zod.string().describe("Stored as string for precision"),
+  gstRate: zod.enum(["0", "5", "12", "18", "28"]),
+  itemType: zod.enum(["goods", "service"]),
+  zohoId: zod.string().nullish(),
+  zohoSyncStatus: zod.enum(["pending", "syncing", "synced", "error"]).nullish(),
+  zohoSyncedAt: zod.date().nullish(),
+  zohoErrorMessage: zod.string().nullish(),
+  createdAt: zod.date(),
+  updatedAt: zod.date(),
+});
+
+/**
+ * @summary Update an item
+ */
+export const UpdateItemParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const updateItemBodyHsnCodeRegExp = new RegExp("^\\d{4,8}$");
+
+export const UpdateItemBody = zod.object({
+  name: zod.string(),
+  hsnCode: zod
+    .string()
+    .regex(updateItemBodyHsnCodeRegExp)
+    .describe("4-8 digit HSN\/SAC code"),
+  description: zod.string().nullish(),
+  unit: zod.enum([
+    "Nos",
+    "Kg",
+    "Grams",
+    "Litre",
+    "Metre",
+    "Box",
+    "Bag",
+    "Piece",
+    "Set",
+  ]),
+  purchaseRate: zod.string(),
+  sellingRate: zod.string(),
+  gstRate: zod.enum(["0", "5", "12", "18", "28"]),
+  itemType: zod.enum(["goods", "service"]),
+});
+
+export const UpdateItemResponse = zod.object({
+  id: zod.number(),
+  name: zod.string(),
+  hsnCode: zod.string().describe("4-8 digit HSN\/SAC code"),
+  description: zod.string().nullish(),
+  unit: zod.enum([
+    "Nos",
+    "Kg",
+    "Grams",
+    "Litre",
+    "Metre",
+    "Box",
+    "Bag",
+    "Piece",
+    "Set",
+  ]),
+  purchaseRate: zod.string().describe("Stored as string for precision"),
+  sellingRate: zod.string().describe("Stored as string for precision"),
+  gstRate: zod.enum(["0", "5", "12", "18", "28"]),
+  itemType: zod.enum(["goods", "service"]),
+  zohoId: zod.string().nullish(),
+  zohoSyncStatus: zod.enum(["pending", "syncing", "synced", "error"]).nullish(),
+  zohoSyncedAt: zod.date().nullish(),
+  zohoErrorMessage: zod.string().nullish(),
+  createdAt: zod.date(),
+  updatedAt: zod.date(),
+});
+
+/**
+ * @summary Delete an item
+ */
+export const DeleteItemParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const DeleteItemResponse = zod.object({
+  message: zod.string(),
+});
+
+/**
+ * @summary Push item to Zoho Books (admin only)
+ */
+export const PushItemToZohoParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const PushItemToZohoResponse = zod.object({
+  message: zod.string().optional(),
+  zohoId: zod.string().optional(),
+});
+
+/**
+ * @summary Bulk push items to Zoho Books (admin only)
+ */
+export const BulkPushItemsToZohoBody = zod.object({
+  itemIds: zod.array(zod.number()),
+});
+
+export const BulkPushItemsToZohoResponse = zod.object({
+  message: zod.string(),
+  results: zod
+    .array(
+      zod.object({
+        itemId: zod.number().optional(),
+        itemName: zod.string().optional(),
+        success: zod.boolean().optional(),
+        zohoId: zod.string().nullish(),
+        error: zod.string().nullish(),
+      }),
+    )
+    .optional(),
+  summary: zod
+    .object({
+      total: zod.number().optional(),
+      succeeded: zod.number().optional(),
+      failed: zod.number().optional(),
+    })
+    .optional(),
 });
 
 /**

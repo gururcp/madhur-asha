@@ -59,12 +59,33 @@ export interface ApproveUserRequest {
   assignedCustomerIds?: number[];
 }
 
+export type CustomerZohoSyncStatus =
+  | (typeof CustomerZohoSyncStatus)[keyof typeof CustomerZohoSyncStatus]
+  | null;
+
+export const CustomerZohoSyncStatus = {
+  pending: "pending",
+  syncing: "syncing",
+  synced: "synced",
+  error: "error",
+} as const;
+
 export interface Customer {
   id: number;
+  /** Business Name (Legal Name from GST) */
   name: string;
   gstin?: string | null;
   address?: string | null;
   contact?: string | null;
+  contactPerson?: string | null;
+  /** GST registration status (Active/Cancelled) */
+  gstStatus?: string | null;
+  state?: string | null;
+  pincode?: string | null;
+  zohoId?: string | null;
+  zohoSyncStatus?: CustomerZohoSyncStatus;
+  zohoSyncedAt?: string | null;
+  zohoErrorMessage?: string | null;
   createdAt: string;
   calculationCount: number;
 }
@@ -73,7 +94,35 @@ export interface CreateCustomerRequest {
   name: string;
   gstin?: string | null;
   address?: string | null;
-  contact?: string | null;
+  contact?: string;
+  contactPerson?: string | null;
+  gstStatus?: string | null;
+  state?: string | null;
+  pincode?: string | null;
+}
+
+/**
+ * Current GST registration status
+ */
+export type GSTLookupResponseGstStatus =
+  (typeof GSTLookupResponseGstStatus)[keyof typeof GSTLookupResponseGstStatus];
+
+export const GSTLookupResponseGstStatus = {
+  Active: "Active",
+  Cancelled: "Cancelled",
+} as const;
+
+export interface GSTLookupResponse {
+  /** Legal name (becomes Business Name) */
+  name: string;
+  /** Current GST registration status */
+  gstStatus: GSTLookupResponseGstStatus;
+  /** Complete principal business address */
+  address: string;
+  /** State of registration */
+  state: string;
+  /** Pincode of principal address */
+  pincode: string;
 }
 
 export interface Expense {
@@ -135,6 +184,213 @@ export interface DashboardStats {
   netProfitMtd: number;
   recentCalculations: Calculation[];
 }
+
+export type SupplierBankAccount = {
+  accountNo?: string;
+  ifsc?: string;
+  bankName?: string;
+} | null;
+
+export type SupplierZohoSyncStatus =
+  | (typeof SupplierZohoSyncStatus)[keyof typeof SupplierZohoSyncStatus]
+  | null;
+
+export const SupplierZohoSyncStatus = {
+  pending: "pending",
+  syncing: "syncing",
+  synced: "synced",
+  error: "error",
+} as const;
+
+export interface Supplier {
+  id: number;
+  businessName: string;
+  gstin?: string | null;
+  contactPerson?: string | null;
+  status?: string | null;
+  address?: string | null;
+  state?: string | null;
+  pincode?: string | null;
+  contactInfo?: string | null;
+  paymentTerms?: string | null;
+  bankAccount?: SupplierBankAccount;
+  zohoId?: string | null;
+  zohoSyncStatus?: SupplierZohoSyncStatus;
+  zohoSyncedAt?: string | null;
+  zohoErrorMessage?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type CreateSupplierRequestPaymentTerms =
+  | (typeof CreateSupplierRequestPaymentTerms)[keyof typeof CreateSupplierRequestPaymentTerms]
+  | null;
+
+export const CreateSupplierRequestPaymentTerms = {
+  Net_7: "Net 7",
+  Net_15: "Net 15",
+  Net_30: "Net 30",
+  Net_45: "Net 45",
+  Net_60: "Net 60",
+} as const;
+
+export type CreateSupplierRequestBankAccount = {
+  accountNo?: string;
+  ifsc?: string;
+  bankName?: string;
+} | null;
+
+export interface CreateSupplierRequest {
+  businessName: string;
+  gstin?: string | null;
+  contactPerson?: string | null;
+  status?: string | null;
+  address?: string | null;
+  state?: string | null;
+  pincode?: string | null;
+  contactInfo?: string | null;
+  paymentTerms?: CreateSupplierRequestPaymentTerms;
+  bankAccount?: CreateSupplierRequestBankAccount;
+}
+
+export type ItemUnit = (typeof ItemUnit)[keyof typeof ItemUnit];
+
+export const ItemUnit = {
+  Nos: "Nos",
+  Kg: "Kg",
+  Grams: "Grams",
+  Litre: "Litre",
+  Metre: "Metre",
+  Box: "Box",
+  Bag: "Bag",
+  Piece: "Piece",
+  Set: "Set",
+} as const;
+
+export type ItemGstRate = (typeof ItemGstRate)[keyof typeof ItemGstRate];
+
+export const ItemGstRate = {
+  NUMBER_0: "0",
+  NUMBER_5: "5",
+  NUMBER_12: "12",
+  NUMBER_18: "18",
+  NUMBER_28: "28",
+} as const;
+
+export type ItemItemType = (typeof ItemItemType)[keyof typeof ItemItemType];
+
+export const ItemItemType = {
+  goods: "goods",
+  service: "service",
+} as const;
+
+export type ItemZohoSyncStatus =
+  | (typeof ItemZohoSyncStatus)[keyof typeof ItemZohoSyncStatus]
+  | null;
+
+export const ItemZohoSyncStatus = {
+  pending: "pending",
+  syncing: "syncing",
+  synced: "synced",
+  error: "error",
+} as const;
+
+export interface Item {
+  id: number;
+  name: string;
+  /** 4-8 digit HSN/SAC code */
+  hsnCode: string;
+  description?: string | null;
+  unit: ItemUnit;
+  /** Stored as string for precision */
+  purchaseRate: string;
+  /** Stored as string for precision */
+  sellingRate: string;
+  gstRate: ItemGstRate;
+  itemType: ItemItemType;
+  zohoId?: string | null;
+  zohoSyncStatus?: ItemZohoSyncStatus;
+  zohoSyncedAt?: string | null;
+  zohoErrorMessage?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type CreateItemRequestUnit =
+  (typeof CreateItemRequestUnit)[keyof typeof CreateItemRequestUnit];
+
+export const CreateItemRequestUnit = {
+  Nos: "Nos",
+  Kg: "Kg",
+  Grams: "Grams",
+  Litre: "Litre",
+  Metre: "Metre",
+  Box: "Box",
+  Bag: "Bag",
+  Piece: "Piece",
+  Set: "Set",
+} as const;
+
+export type CreateItemRequestGstRate =
+  (typeof CreateItemRequestGstRate)[keyof typeof CreateItemRequestGstRate];
+
+export const CreateItemRequestGstRate = {
+  NUMBER_0: "0",
+  NUMBER_5: "5",
+  NUMBER_12: "12",
+  NUMBER_18: "18",
+  NUMBER_28: "28",
+} as const;
+
+export type CreateItemRequestItemType =
+  (typeof CreateItemRequestItemType)[keyof typeof CreateItemRequestItemType];
+
+export const CreateItemRequestItemType = {
+  goods: "goods",
+  service: "service",
+} as const;
+
+export interface CreateItemRequest {
+  name: string;
+  /**
+   * 4-8 digit HSN/SAC code
+   * @pattern ^\d{4,8}$
+   */
+  hsnCode: string;
+  description?: string | null;
+  unit: CreateItemRequestUnit;
+  purchaseRate: string;
+  sellingRate: string;
+  gstRate: CreateItemRequestGstRate;
+  itemType: CreateItemRequestItemType;
+}
+
+export type LookupGSTParams = {
+  /**
+   * 15-character GSTIN to lookup
+   * @pattern ^\d{2}[A-Z]{5}\d{4}[A-Z]{1}[A-Z\d]{1}Z[A-Z\d]{1}$
+   */
+  gstin: string;
+};
+
+export type PushCustomerToZoho200 = {
+  message?: string;
+  zohoId?: string;
+};
+
+export type PushSupplierToZoho200 = {
+  message?: string;
+  zohoId?: string;
+};
+
+export type PushItemToZoho200 = {
+  message?: string;
+  zohoId?: string;
+};
+
+export type BulkPushItemsToZohoBody = {
+  itemIds: number[];
+};
 
 export type ListCalculationsParams = {
   customerId?: number;

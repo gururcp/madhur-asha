@@ -15,6 +15,10 @@ tags:
     description: User management
   - name: customers
     description: Customer management
+  - name: suppliers
+    description: Supplier management
+  - name: items
+    description: Item/Product management
   - name: calculations
     description: GST calculations
 paths:
@@ -122,6 +126,53 @@ paths:
               schema:
                 $ref: "#/components/schemas/User"
 
+  /gst/lookup:
+    get:
+      operationId: lookupGST
+      tags: [customers]
+      summary: Lookup GST details by GSTIN
+      description: Fetches GST registration details from government records via RapidAPI
+      parameters:
+        - name: gstin
+          in: query
+          required: true
+          description: 15-character GSTIN to lookup
+          schema:
+            type: string
+            pattern: '^\d{2}[A-Z]{5}\d{4}[A-Z]{1}[A-Z\d]{1}Z[A-Z\d]{1}$'
+            example: "27AABCI6363G3ZH"
+      responses:
+        "200":
+          description: GST details found successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GSTLookupResponse"
+        "400":
+          description: Invalid GSTIN format
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: GSTIN not found in records
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "429":
+          description: Too many requests
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "503":
+          description: GST API service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   /customers:
     get:
       operationId: listCustomers
@@ -211,6 +262,321 @@ paths:
           content:
             application/json:
               schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /customers/{id}/push-zoho:
+    post:
+      operationId: pushCustomerToZoho
+      tags: [customers]
+      summary: Push customer to Zoho Books (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Customer synced to Zoho
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  zohoId:
+                    type: string
+        "403":
+          description: Admin only
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /suppliers:
+    get:
+      operationId: listSuppliers
+      tags: [suppliers]
+      summary: List suppliers
+      responses:
+        "200":
+          description: List of suppliers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Supplier"
+    post:
+      operationId: createSupplier
+      tags: [suppliers]
+      summary: Create a supplier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSupplierRequest"
+      responses:
+        "201":
+          description: Supplier created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Supplier"
+
+  /suppliers/{id}:
+    get:
+      operationId: getSupplier
+      tags: [suppliers]
+      summary: Get a supplier
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Supplier
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Supplier"
+    put:
+      operationId: updateSupplier
+      tags: [suppliers]
+      summary: Update a supplier
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSupplierRequest"
+      responses:
+        "200":
+          description: Supplier updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Supplier"
+    delete:
+      operationId: deleteSupplier
+      tags: [suppliers]
+      summary: Delete a supplier
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Supplier deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /suppliers/{id}/push-zoho:
+    post:
+      operationId: pushSupplierToZoho
+      tags: [suppliers]
+      summary: Push supplier to Zoho Books (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Supplier synced to Zoho
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  zohoId:
+                    type: string
+
+  /items:
+    get:
+      operationId: listItems
+      tags: [items]
+      summary: List items
+      responses:
+        "200":
+          description: List of items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Item"
+    post:
+      operationId: createItem
+      tags: [items]
+      summary: Create an item
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateItemRequest"
+      responses:
+        "201":
+          description: Item created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Item"
+
+  /items/{id}:
+    get:
+      operationId: getItem
+      tags: [items]
+      summary: Get an item
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Item
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Item"
+    put:
+      operationId: updateItem
+      tags: [items]
+      summary: Update an item
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateItemRequest"
+      responses:
+        "200":
+          description: Item updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Item"
+    delete:
+      operationId: deleteItem
+      tags: [items]
+      summary: Delete an item
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Item deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /items/{id}/push-zoho:
+    post:
+      operationId: pushItemToZoho
+      tags: [items]
+      summary: Push item to Zoho Books (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Item synced to Zoho
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  zohoId:
+                    type: string
+
+  /items/bulk-push-zoho:
+    post:
+      operationId: bulkPushItemsToZoho
+      tags: [items]
+      summary: Bulk push items to Zoho Books (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                itemIds:
+                  type: array
+                  items:
+                    type: integer
+              required: [itemIds]
+      responses:
+        "200":
+          description: Bulk push completed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  results:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        itemId:
+                          type: integer
+                        itemName:
+                          type: string
+                        success:
+                          type: boolean
+                        zohoId:
+                          type: string
+                          nullable: true
+                        error:
+                          type: string
+                          nullable: true
+                  summary:
+                    type: object
+                    properties:
+                      total:
+                        type: integer
+                      succeeded:
+                        type: integer
+                      failed:
+                        type: integer
                 $ref: "#/components/schemas/MessageResponse"
 
   /calculations:
@@ -370,6 +736,7 @@ components:
           type: integer
         name:
           type: string
+          description: Business Name (Legal Name from GST)
         gstin:
           type: string
           nullable: true
@@ -377,6 +744,33 @@ components:
           type: string
           nullable: true
         contact:
+          type: string
+          nullable: true
+        contactPerson:
+          type: string
+          nullable: true
+        gstStatus:
+          type: string
+          nullable: true
+          description: GST registration status (Active/Cancelled)
+        state:
+          type: string
+          nullable: true
+        pincode:
+          type: string
+          nullable: true
+        zohoId:
+          type: string
+          nullable: true
+        zohoSyncStatus:
+          type: string
+          nullable: true
+          enum: [pending, syncing, synced, error]
+        zohoSyncedAt:
+          type: string
+          format: date-time
+          nullable: true
+        zohoErrorMessage:
           type: string
           nullable: true
         createdAt:
@@ -399,8 +793,45 @@ components:
           nullable: true
         contact:
           type: string
+        contactPerson:
+          type: string
+          nullable: true
+        gstStatus:
+          type: string
+          nullable: true
+        state:
+          type: string
+          nullable: true
+        pincode:
+          type: string
           nullable: true
       required: [name]
+
+    GSTLookupResponse:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Legal name (becomes Business Name)
+          example: "Reliance Jio Infocomm Limited"
+        gstStatus:
+          type: string
+          enum: [Active, Cancelled]
+          description: Current GST registration status
+          example: "Active"
+        address:
+          type: string
+          description: Complete principal business address
+          example: "WEST END MALL - II, S.No.169/1, Sector - II, H.No.1 Village Aundh, Tal.Haveli, Pune"
+        state:
+          type: string
+          description: State of registration
+          example: "Maharashtra"
+        pincode:
+          type: string
+          description: Pincode of principal address
+          example: "411007"
+      required: [name, gstStatus, address, state, pincode]
 
     Expense:
       type: object
@@ -531,3 +962,186 @@ components:
           items:
             $ref: "#/components/schemas/Calculation"
       required: [totalCustomers, totalCalculations, netProfitMtd, recentCalculations]
+
+
+    Supplier:
+      type: object
+      properties:
+        id:
+          type: integer
+        businessName:
+          type: string
+        gstin:
+          type: string
+          nullable: true
+        contactPerson:
+          type: string
+          nullable: true
+        status:
+          type: string
+          nullable: true
+        address:
+          type: string
+          nullable: true
+        state:
+          type: string
+          nullable: true
+        pincode:
+          type: string
+          nullable: true
+        contactInfo:
+          type: string
+          nullable: true
+        paymentTerms:
+          type: string
+          nullable: true
+        bankAccount:
+          type: object
+          nullable: true
+          properties:
+            accountNo:
+              type: string
+            ifsc:
+              type: string
+            bankName:
+              type: string
+        zohoId:
+          type: string
+          nullable: true
+        zohoSyncStatus:
+          type: string
+          nullable: true
+          enum: [pending, syncing, synced, error]
+        zohoSyncedAt:
+          type: string
+          format: date-time
+          nullable: true
+        zohoErrorMessage:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required: [id, businessName, createdAt, updatedAt]
+
+    CreateSupplierRequest:
+      type: object
+      properties:
+        businessName:
+          type: string
+        gstin:
+          type: string
+          nullable: true
+        contactPerson:
+          type: string
+          nullable: true
+        status:
+          type: string
+          nullable: true
+        address:
+          type: string
+          nullable: true
+        state:
+          type: string
+          nullable: true
+        pincode:
+          type: string
+          nullable: true
+        contactInfo:
+          type: string
+          nullable: true
+        paymentTerms:
+          type: string
+          nullable: true
+          enum: [Net 7, Net 15, Net 30, Net 45, Net 60]
+        bankAccount:
+          type: object
+          nullable: true
+          properties:
+            accountNo:
+              type: string
+            ifsc:
+              type: string
+            bankName:
+              type: string
+      required: [businessName]
+
+    Item:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        hsnCode:
+          type: string
+          description: 4-8 digit HSN/SAC code
+        description:
+          type: string
+          nullable: true
+        unit:
+          type: string
+          enum: [Nos, Kg, Grams, Litre, Metre, Box, Bag, Piece, Set]
+        purchaseRate:
+          type: string
+          description: Stored as string for precision
+        sellingRate:
+          type: string
+          description: Stored as string for precision
+        gstRate:
+          type: string
+          enum: ["0", "5", "12", "18", "28"]
+        itemType:
+          type: string
+          enum: [goods, service]
+        zohoId:
+          type: string
+          nullable: true
+        zohoSyncStatus:
+          type: string
+          nullable: true
+          enum: [pending, syncing, synced, error]
+        zohoSyncedAt:
+          type: string
+          format: date-time
+          nullable: true
+        zohoErrorMessage:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required: [id, name, hsnCode, unit, purchaseRate, sellingRate, gstRate, itemType, createdAt, updatedAt]
+
+    CreateItemRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        hsnCode:
+          type: string
+          pattern: '^\d{4,8}$'
+          description: 4-8 digit HSN/SAC code
+        description:
+          type: string
+          nullable: true
+        unit:
+          type: string
+          enum: [Nos, Kg, Grams, Litre, Metre, Box, Bag, Piece, Set]
+        purchaseRate:
+          type: string
+        sellingRate:
+          type: string
+        gstRate:
+          type: string
+          enum: ["0", "5", "12", "18", "28"]
+        itemType:
+          type: string
+          enum: [goods, service]
+      required: [name, hsnCode, unit, purchaseRate, sellingRate, gstRate, itemType]

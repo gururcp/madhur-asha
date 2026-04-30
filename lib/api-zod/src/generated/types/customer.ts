@@ -5,13 +5,24 @@
  * Madhur Asha Enterprises Portal API
  * OpenAPI spec version: 0.1.0
  */
+import type { CustomerZohoSyncStatus } from "./customerZohoSyncStatus";
 
 export interface Customer {
   id: number;
+  /** Business Name (Legal Name from GST) */
   name: string;
   gstin?: string | null;
   address?: string | null;
   contact?: string | null;
+  contactPerson?: string | null;
+  /** GST registration status (Active/Cancelled) */
+  gstStatus?: string | null;
+  state?: string | null;
+  pincode?: string | null;
+  zohoId?: string | null;
+  zohoSyncStatus?: CustomerZohoSyncStatus;
+  zohoSyncedAt?: Date | null;
+  zohoErrorMessage?: string | null;
   createdAt: Date;
   calculationCount: number;
 }

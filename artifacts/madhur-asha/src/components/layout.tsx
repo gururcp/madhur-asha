@@ -4,7 +4,7 @@ import { useGetMe, useLogout } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "./ui/button";
 import { cn } from "@/lib/utils";
-import { Loader2, LayoutDashboard, Calculator, Users, FileText, Settings, LogOut, X, ChevronRight, CheckCircle2 } from "lucide-react";
+import { Loader2, LayoutDashboard, Calculator, Users, FileText, Settings, LogOut, X, ChevronRight, CheckCircle2, Truck, Package, ShoppingCart, Receipt, Workflow, BarChart3, TrendingUp } from "lucide-react";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const { data: user, isLoading, isError, refetch } = useGetMe({ query: { retry: false } });
@@ -126,9 +126,16 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const navItems = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, show: true },
     { href: "/calculator", label: "Calculator", icon: Calculator, show: true },
+    { href: "/orders", label: "Orders", icon: ShoppingCart, show: user.role === "admin" || user.role === "customer_access" },
     { href: "/customers", label: "Customers", icon: Users, show: user.role === "admin" || user.role === "customer_access" },
+    { href: "/suppliers", label: "Suppliers", icon: Truck, show: user.role === "admin" || user.role === "customer_access" },
+    { href: "/items", label: "Items", icon: Package, show: user.role === "admin" || user.role === "customer_access" },
+    { href: "/expenses", label: "Expenses", icon: Receipt, show: user.role === "admin" || user.role === "customer_access" },
+    { href: "/reports", label: "Reports", icon: BarChart3, show: user.role === "admin" || user.role === "customer_access" },
+    { href: "/analytics", label: "Analytics", icon: TrendingUp, show: user.role === "admin" || user.role === "customer_access" },
     { href: "/history", label: "History", icon: FileText, show: user.role === "admin" || user.role === "customer_access" },
-    { href: "/admin/users", label: "Admin", icon: Settings, show: user.role === "admin" },
+    { href: "/admin/stages", label: "Stages", icon: Workflow, show: user.role === "admin" },
+    { href: "/admin/users", label: "Users", icon: Settings, show: user.role === "admin" },
   ];
 
   const visibleNav = navItems.filter(item => item.show);

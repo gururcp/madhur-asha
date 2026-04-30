@@ -1,14 +1,17 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/utils";
-import { Plus, Trash2, Save, FileText, CheckCircle2, ChevronRight } from "lucide-react";
+import { Plus, Trash2, Save, FileText, CheckCircle2, ChevronRight, ShoppingCart, ArrowRight } from "lucide-react";
 import { useGetMe, useListCustomers, useCreateCalculation } from "@workspace/api-client-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { useLocation } from "wouter";
 
 type FormValues = {
   purchaseAmount: number;
@@ -19,6 +22,7 @@ type FormValues = {
   saleGstRate: number;
   expenses: { label: string; amount: number; hasGst: boolean; gstRate: number }[];
   commission: number;
+  commissionPercentage: number;
 };
 
 const GST_RATES = ["0", "5", "12", "18", "28"];
@@ -35,10 +39,11 @@ function GstSelect({ className, ...props }: React.SelectHTMLAttributes<HTMLSelec
 }
 
 // Move these components outside to prevent re-creation on every render
-const ResultsPanel = ({ result, canSave, onSaveClick }: {
+const ResultsPanel = ({ result, canSave, onSaveClick, onCreateOrderClick }: {
   result: { purchaseExGst: number; purchaseGstAmount: number; saleExGst: number; saleGstAmount: number; netGstPayable: number; grossProfit: number; totalExpenses: number; netProfit: number };
   canSave: boolean;
   onSaveClick: () => void;
+  onCreateOrderClick: () => void;
 }) => (
   <Card className="bg-gradient-to-b from-primary/10 to-transparent border-primary/30 shadow-xl overflow-hidden">
     <div className="bg-primary p-5 text-primary-foreground text-center">
@@ -98,10 +103,16 @@ const ResultsPanel = ({ result, canSave, onSaveClick }: {
       </div>
 
       {canSave && (
-        <Button size="lg" onClick={onSaveClick} className="w-full shadow-lg mt-2">
-          <Save className="w-5 h-5 mr-2" />
-          Save Calculation
-        </Button>
+        <div className="space-y-2">
+          <Button size="lg" onClick={onCreateOrderClick} className="w-full shadow-lg">
+            <ShoppingCart className="w-5 h-5 mr-2" />
+            Create Order
+          </Button>
+          <Button size="lg" onClick={onSaveClick} variant="outline" className="w-full">
+            <Save className="w-5 h-5 mr-2" />
+            Save Calculation Only
+          </Button>
+        </div>
       )}
     </div>
   </Card>
@@ -205,9 +216,35 @@ const InputsPanel = ({ register, fields, append, remove }: {
           </div>
         ))}
 
-        <div className="pt-2 border-t border-border/50 space-y-1.5">
-          <label className="text-xs font-semibold">Commission (No GST) (₹)</label>
-          <Input type="number" inputMode="decimal" {...register("commission", { valueAsNumber: true })} className="text-base" />
+        <div className="pt-2 border-t border-border/50 space-y-3">
+          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Commission (No GST)</label>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium">Percentage (%)</label>
+              <Input
+                type="number"
+                inputMode="decimal"
+                step="0.01"
+                {...register("commissionPercentage", { valueAsNumber: true })}
+                className="text-base"
+                placeholder="0.00"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium">Amount (₹)</label>
+              <Input
+                type="number"
+                inputMode="decimal"
+                step="0.01"
+                {...register("commission", { valueAsNumber: true })}
+                className="text-base"
+                placeholder="0.00"
+              />
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground italic">
+            💡 Enter either percentage or amount - calculated on Sale Price (Ex-GST)
+          </p>
         </div>
       </CardContent>
     </Card>
@@ -217,6 +254,7 @@ const InputsPanel = ({ register, fields, append, remove }: {
 export default function CalculatorPage() {
   const { data: user } = useGetMe();
   const canSave = user?.role === 'admin' || user?.role === 'customer_access';
+  const [, setLocation] = useLocation();
 
   const { register, control, watch, setValue, getValues } = useForm<FormValues>({
     defaultValues: {
@@ -228,6 +266,7 @@ export default function CalculatorPage() {
       saleGstRate: 18,
       expenses: [{ label: "Installation / Transport", amount: 0, hasGst: false, gstRate: 18 }],
       commission: 0,
+      commissionPercentage: 0,
     }
   });
 
@@ -239,6 +278,41 @@ export default function CalculatorPage() {
     netGstPayable: 0, grossProfit: 0, totalExpenses: 0, netProfit: 0
   });
 
+  // Use ref to prevent circular updates
+  const isUpdatingCommission = useRef(false);
+
+  // Separate effect for commission percentage/amount sync
+  useEffect(() => {
+    const subscription = watch((formValues, { name }) => {
+      // Prevent circular updates
+      if (isUpdatingCommission.current) {
+        return;
+      }
+
+      // Calculate sale price ex-GST (base for commission calculation)
+      const sAmt = Number(formValues.saleAmount) || 0;
+      const sRate = Number(formValues.saleGstRate) || 0;
+      const sExGst = formValues.saleInclGst ? sAmt / (1 + sRate / 100) : sAmt;
+
+      // Handle commission sync based on sale price ex-GST
+      if (name === 'commissionPercentage' && sExGst > 0) {
+        const percentage = Number(formValues.commissionPercentage) || 0;
+        const amount = (sExGst * percentage) / 100;
+        isUpdatingCommission.current = true;
+        setValue('commission', Number(amount.toFixed(2)), { shouldValidate: false });
+        setTimeout(() => { isUpdatingCommission.current = false; }, 0);
+      } else if (name === 'commission' && sExGst > 0) {
+        const amount = Number(formValues.commission) || 0;
+        const percentage = (amount / sExGst) * 100;
+        isUpdatingCommission.current = true;
+        setValue('commissionPercentage', Number(percentage.toFixed(2)), { shouldValidate: false });
+        setTimeout(() => { isUpdatingCommission.current = false; }, 0);
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [watch, setValue]);
+
+  // Main calculation effect
   useEffect(() => {
     const subscription = watch((formValues) => {
       const pAmt = Number(formValues.purchaseAmount) || 0;
@@ -282,12 +356,15 @@ export default function CalculatorPage() {
 
   const [mobileTab, setMobileTab] = useState<'inputs' | 'results'>('inputs');
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+  const [createOrderDialogOpen, setCreateOrderDialogOpen] = useState(false);
+  
   const { data: customers } = useListCustomers({
     query: {
-      enabled: saveDialogOpen,
+      enabled: saveDialogOpen || createOrderDialogOpen,
       queryKey: ['customers'] as const
     }
   });
+  
   const saveMutation = useCreateCalculation();
   const [saveForm, setSaveForm] = useState({
     customerId: "", label: "", billNumber: "", notes: "", date: format(new Date(), 'yyyy-MM-dd')
@@ -311,6 +388,39 @@ export default function CalculatorPage() {
         alert("Calculation saved successfully!");
       }
     });
+  };
+
+  const handleCreateOrder = () => {
+    // Get current form values
+    const formValues = getValues();
+    
+    // Build URL with calculation data as query parameters
+    const params = new URLSearchParams({
+      // Purchase data
+      purchaseAmount: String(formValues.purchaseAmount || 0),
+      purchaseInclGst: String(formValues.purchaseInclGst),
+      purchaseGstRate: String(formValues.purchaseGstRate || 0),
+      // Sale data
+      saleAmount: String(formValues.saleAmount || 0),
+      saleInclGst: String(formValues.saleInclGst),
+      saleGstRate: String(formValues.saleGstRate || 0),
+      // Calculated values
+      supplierRate: String(result.purchaseExGst || 0),
+      purchaseGstPct: String(formValues.purchaseGstRate || 0),
+      sellingRate: String(result.saleExGst || 0),
+      saleGstPct: String(formValues.saleGstRate || 0),
+      // Commission
+      commission: String(formValues.commission || 0),
+      // Expenses (serialize as JSON)
+      expenses: JSON.stringify(formValues.expenses || []),
+      // Results
+      grossProfit: String(result.grossProfit || 0),
+      netProfit: String(result.netProfit || 0),
+      totalExpenses: String(result.totalExpenses || 0),
+    });
+    
+    setCreateOrderDialogOpen(false);
+    setLocation(`/orders/create?${params.toString()}`);
   };
 
   return (
@@ -364,7 +474,12 @@ export default function CalculatorPage() {
         {/* Results */}
         <div className={cn("lg:col-span-5", "md:block", mobileTab === 'results' ? 'block' : 'hidden md:block')}>
           <div className="lg:sticky lg:top-8">
-            <ResultsPanel result={result} canSave={canSave} onSaveClick={() => setSaveDialogOpen(true)} />
+            <ResultsPanel
+              result={result}
+              canSave={canSave}
+              onSaveClick={() => setSaveDialogOpen(true)}
+              onCreateOrderClick={() => setCreateOrderDialogOpen(true)}
+            />
           </div>
         </div>
       </div>
@@ -413,6 +528,74 @@ export default function CalculatorPage() {
           <Button onClick={handleSave} isLoading={saveMutation.isPending} className="w-full">
             Confirm Save
           </Button>
+        </div>
+      </Dialog>
+
+      {/* Create Order Dialog */}
+      <Dialog open={createOrderDialogOpen} onOpenChange={setCreateOrderDialogOpen}>
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <ShoppingCart className="h-5 w-5" />
+            Create Order from Calculation
+          </DialogTitle>
+          <DialogDescription>
+            Convert this calculation into a full order with all financial details pre-filled
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4">
+          {/* Summary Card */}
+          <Card className="bg-primary/5 border-primary/20">
+            <CardContent className="pt-4">
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Purchase (Ex-GST)</span>
+                  <span className="font-semibold">{formatCurrency(result.purchaseExGst)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Sale (Ex-GST)</span>
+                  <span className="font-semibold">{formatCurrency(result.saleExGst)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Expenses</span>
+                  <span className="font-semibold">{formatCurrency(result.totalExpenses)}</span>
+                </div>
+                <div className="h-px bg-border my-2" />
+                <div className="flex justify-between text-base">
+                  <span className="font-bold">Net Profit</span>
+                  <span className="font-bold text-primary">{formatCurrency(result.netProfit)}</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Info Banner */}
+          <div className="flex gap-3 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+            <ArrowRight className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
+            <div className="text-sm">
+              <p className="font-medium text-blue-700 dark:text-blue-400 mb-1">What happens next?</p>
+              <p className="text-muted-foreground">
+                This will create a new order at <Badge variant="secondary" className="mx-1">ENQUIRY</Badge> stage with all financial calculations pre-filled. You can then add customer, supplier, and item details.
+              </p>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex gap-2 pt-2">
+            <Button
+              variant="outline"
+              onClick={() => setCreateOrderDialogOpen(false)}
+              className="flex-1"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleCreateOrder}
+              className="flex-1"
+            >
+              <ShoppingCart className="h-4 w-4 mr-2" />
+              Create Order
+            </Button>
+          </div>
         </div>
       </Dialog>
     </div>

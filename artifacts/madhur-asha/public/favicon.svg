@@ -1,3 +1,11 @@
-<svg width="180" height="180" viewBox="0 0 180 180" fill="none" xmlns="http://www.w3.org/2000/svg">
-<rect width="180" height="180" rx="36" fill="#FF3C00"/>
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Green mountain (front) -->
+  <path d="M16 4 L28 28 L4 28 Z" fill="#2DB87A"/>
+  <!-- Dark mountains (sides) -->
+  <path d="M4 28 L10 16 L16 28 Z" fill="#1E293B"/>
+  <path d="M28 28 L22 16 L16 28 Z" fill="#1E293B"/>
+  <!-- White outline for definition -->
+  <path d="M16 6 L26 26 L6 26 Z" fill="none" stroke="white" stroke-width="1.5"/>
 </svg>
+
+<!-- Made with Bob -->
