@@ -54,7 +54,9 @@ export default function SuppliersPage() {
 
   // GSTIN validation
   const validateGSTIN = (gstin: string): boolean => {
-    const gstinRegex = /^\d{2}[A-Z]{5}\d{4}[A-Z]{1}[A-Z\d]{1}Z[A-Z\d]{1}$/;
+    // GSTIN format: 2 digits (state code) + 10 alphanumeric (PAN) + 1 alphabet (entity code) + 1 alphabet/digit (default 'Z') + 1 check digit
+    // Position 14 can be Z, C, D, F, etc. depending on entity type
+    const gstinRegex = /^\d{2}[A-Z]{5}\d{4}[A-Z]{1}[A-Z\d]{1}[A-Z\d]{1}[A-Z\d]{1}$/;
     return gstinRegex.test(gstin) && gstin.length === 15;
   };
 
