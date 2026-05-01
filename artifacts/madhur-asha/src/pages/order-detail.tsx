@@ -235,11 +235,12 @@ export default function OrderDetailPage() {
     
     const fetchDropdownData = async () => {
       try {
+        const backendUrl = import.meta.env.VITE_API_URL || "https://api.madhurasha.arvat.in";
         const [itemsRes, customersRes, suppliersRes, stagesRes] = await Promise.all([
-          fetch('/api/items', { credentials: 'include' }),
-          fetch('/api/customers', { credentials: 'include' }),
-          fetch('/api/suppliers', { credentials: 'include' }),
-          fetch('/api/gem-stages', { credentials: 'include' }),
+          fetch(`${backendUrl}/api/items`, { credentials: 'include' }),
+          fetch(`${backendUrl}/api/customers`, { credentials: 'include' }),
+          fetch(`${backendUrl}/api/suppliers`, { credentials: 'include' }),
+          fetch(`${backendUrl}/api/gem-stages`, { credentials: 'include' }),
         ]);
         
         if (!itemsRes.ok || !customersRes.ok || !suppliersRes.ok || !stagesRes.ok) {
@@ -325,11 +326,12 @@ export default function OrderDetailPage() {
       try {
         setIsLoading(true);
         setError(null);
+        const backendUrl = import.meta.env.VITE_API_URL || "https://api.madhurasha.arvat.in";
         const [orderResponse, stagesResponse, historyResponse, paymentsResponse] = await Promise.all([
-          fetch(`/api/orders/${orderId}`, { credentials: "include" }),
-          fetch("/api/gem-stages", { credentials: "include" }),
-          fetch(`/api/orders/${orderId}/history`, { credentials: "include" }),
-          fetch(`/api/orders/${orderId}/payments`, { credentials: "include" }),
+          fetch(`${backendUrl}/api/orders/${orderId}`, { credentials: "include" }),
+          fetch(`${backendUrl}/api/gem-stages`, { credentials: "include" }),
+          fetch(`${backendUrl}/api/orders/${orderId}/history`, { credentials: "include" }),
+          fetch(`${backendUrl}/api/orders/${orderId}/payments`, { credentials: "include" }),
         ]);
 
         if (!orderResponse.ok) {
@@ -451,7 +453,8 @@ export default function OrderDetailPage() {
     }
 
     try {
-      const response = await fetch(`/api/orders/${orderId}`, {
+      const backendUrl = import.meta.env.VITE_API_URL || "https://api.madhurasha.arvat.in";
+      const response = await fetch(`${backendUrl}/api/orders/${orderId}`, {
         method: "DELETE",
         credentials: "include",
       });
@@ -577,7 +580,8 @@ export default function OrderDetailPage() {
         console.log('[ORDER-DETAIL] Order payload:', JSON.stringify(orderPayload, null, 2));
         console.log('[ORDER-DETAIL] Sending POST request to /api/orders');
 
-        const response = await fetch('/api/orders', {
+        const backendUrl = import.meta.env.VITE_API_URL || "https://api.madhurasha.arvat.in";
+        const response = await fetch(`${backendUrl}/api/orders`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -626,7 +630,8 @@ export default function OrderDetailPage() {
     if (!order) return;
     
     try {
-      const response = await fetch(`/api/orders/${order.id}`, {
+      const backendUrl = import.meta.env.VITE_API_URL || "https://api.madhurasha.arvat.in";
+      const response = await fetch(`${backendUrl}/api/orders/${order.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -676,7 +681,8 @@ export default function OrderDetailPage() {
     
     setIsTransitioning(true);
     try {
-      const response = await fetch(`/api/orders/${orderId}/stage`, {
+      const backendUrl = import.meta.env.VITE_API_URL || "https://api.madhurasha.arvat.in";
+      const response = await fetch(`${backendUrl}/api/orders/${orderId}/stage`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -697,9 +703,10 @@ export default function OrderDetailPage() {
       setStageNotes("");
       
       // Refresh order data and stage history
+      const backendUrl = import.meta.env.VITE_API_URL || "https://api.madhurasha.arvat.in";
       const [orderResponse, historyResponse] = await Promise.all([
-        fetch(`/api/orders/${orderId}`, { credentials: 'include' }),
-        fetch(`/api/orders/${orderId}/history`, { credentials: 'include' }),
+        fetch(`${backendUrl}/api/orders/${orderId}`, { credentials: 'include' }),
+        fetch(`${backendUrl}/api/orders/${orderId}/history`, { credentials: 'include' }),
       ]);
       
       if (orderResponse.ok) {
@@ -733,7 +740,8 @@ export default function OrderDetailPage() {
     
     setIsRecordingPayment(true);
     try {
-      const response = await fetch(`/api/orders/${orderId}/payments`, {
+      const backendUrl = import.meta.env.VITE_API_URL || "https://api.madhurasha.arvat.in";
+      const response = await fetch(`${backendUrl}/api/orders/${orderId}/payments`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -767,9 +775,10 @@ export default function OrderDetailPage() {
       setPaymentNotes("");
       
       // Refresh order and payment data without page reload
+      const backendUrl = import.meta.env.VITE_API_URL || "https://api.madhurasha.arvat.in";
       const [orderResponse, paymentsResponse] = await Promise.all([
-        fetch(`/api/orders/${orderId}`, { credentials: 'include' }),
-        fetch(`/api/orders/${orderId}/payments`, { credentials: 'include' }),
+        fetch(`${backendUrl}/api/orders/${orderId}`, { credentials: 'include' }),
+        fetch(`${backendUrl}/api/orders/${orderId}/payments`, { credentials: 'include' }),
       ]);
       
       if (orderResponse.ok && paymentsResponse.ok) {
@@ -1775,21 +1784,22 @@ export default function OrderDetailPage() {
                               onClick={async () => {
                                 if (!confirm("Are you sure you want to delete this payment?")) return;
                                 try {
-                                  const response = await fetch(`/api/orders/${orderId}/payments/${payment.id}`, {
+                                  const backendUrl = import.meta.env.VITE_API_URL || "https://api.madhurasha.arvat.in";
+                                  const response = await fetch(`${backendUrl}/api/orders/${orderId}/payments/${payment.id}`, {
                                     method: "DELETE",
                                     credentials: "include",
                                   });
                                   if (!response.ok) throw new Error("Failed to delete payment");
                                   toast.success("Payment deleted successfully");
                                   // Refresh payments
-                                  const paymentsResponse = await fetch(`/api/orders/${orderId}/payments`, { credentials: "include" });
+                                  const paymentsResponse = await fetch(`${backendUrl}/api/orders/${orderId}/payments`, { credentials: "include" });
                                   const paymentsData = await paymentsResponse.json();
                                   setPayments({
                                     receivable: paymentsData.filter((p: Payment) => p.paymentType === "receivable"),
                                     payable: paymentsData.filter((p: Payment) => p.paymentType === "payable"),
                                   });
                                   // Refresh order to update totals
-                                  const orderResponse = await fetch(`/api/orders/${orderId}`, { credentials: "include" });
+                                  const orderResponse = await fetch(`${backendUrl}/api/orders/${orderId}`, { credentials: "include" });
                                   const orderData = await orderResponse.json();
                                   setOrder(orderData);
                                 } catch (error) {
@@ -1831,21 +1841,22 @@ export default function OrderDetailPage() {
                               onClick={async () => {
                                 if (!confirm("Are you sure you want to delete this payment?")) return;
                                 try {
-                                  const response = await fetch(`/api/orders/${orderId}/payments/${payment.id}`, {
+                                  const backendUrl = import.meta.env.VITE_API_URL || "https://api.madhurasha.arvat.in";
+                                  const response = await fetch(`${backendUrl}/api/orders/${orderId}/payments/${payment.id}`, {
                                     method: "DELETE",
                                     credentials: "include",
                                   });
                                   if (!response.ok) throw new Error("Failed to delete payment");
                                   toast.success("Payment deleted successfully");
                                   // Refresh payments
-                                  const paymentsResponse = await fetch(`/api/orders/${orderId}/payments`, { credentials: "include" });
+                                  const paymentsResponse = await fetch(`${backendUrl}/api/orders/${orderId}/payments`, { credentials: "include" });
                                   const paymentsData = await paymentsResponse.json();
                                   setPayments({
                                     receivable: paymentsData.filter((p: Payment) => p.paymentType === "receivable"),
                                     payable: paymentsData.filter((p: Payment) => p.paymentType === "payable"),
                                   });
                                   // Refresh order to update totals
-                                  const orderResponse = await fetch(`/api/orders/${orderId}`, { credentials: "include" });
+                                  const orderResponse = await fetch(`${backendUrl}/api/orders/${orderId}`, { credentials: "include" });
                                   const orderData = await orderResponse.json();
                                   setOrder(orderData);
                                 } catch (error) {

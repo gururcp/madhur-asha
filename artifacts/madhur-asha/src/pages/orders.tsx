@@ -97,9 +97,11 @@ export default function OrdersPage() {
       console.log('[ORDERS] Fetching orders data...');
 
       // Fetch stages and orders in parallel
+      // Use direct backend URL to avoid Vercel proxy cookie issues
+      const backendUrl = import.meta.env.VITE_API_URL || "https://api.madhurasha.arvat.in";
       const [stagesResponse, ordersResponse] = await Promise.all([
-        fetch("/api/gem-stages", { credentials: "include" }),
-        fetch("/api/orders", { credentials: "include" }),
+        fetch(`${backendUrl}/api/gem-stages`, { credentials: "include" }),
+        fetch(`${backendUrl}/api/orders`, { credentials: "include" }),
       ]);
 
       if (!stagesResponse.ok) {
@@ -369,7 +371,8 @@ export default function OrdersPage() {
     setDeletingOrderId(orderId);
 
     try {
-      const response = await fetch(`/api/orders/${orderId}`, {
+      const backendUrl = import.meta.env.VITE_API_URL || "https://api.madhurasha.arvat.in";
+      const response = await fetch(`${backendUrl}/api/orders/${orderId}`, {
         method: "DELETE",
         credentials: "include",
       });
